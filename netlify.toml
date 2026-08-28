@@ -1,0 +1,20 @@
+# Netlify deployment configuration.
+#
+# NODE_VERSION is the critical setting here: this project uses Node's
+# built-in node:sqlite module (see lib/db/client.js), which does not exist
+# before Node 22.5. Netlify's default build image did not have that,
+# so without this file every server-rendered page (which is almost all of
+# them) crashed immediately with "Cannot find module 'node:sqlite'" the
+# moment it tried to read the database. That was the root cause of the
+# broken golden-smakager-e2d235.netlify.app deployment.
+#
+# This does not by itself make the admin panel's writes (bookings, settings
+# edits, photo uploads) reliably persistent on Netlify. See the comment at
+# the top of lib/db/client.js for why, and what a real production
+# deployment of the full app (not just the public marketing pages) needs
+# instead.
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"

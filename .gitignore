@@ -1,0 +1,23 @@
+node_modules
+.next
+out
+.env
+.env*.local
+.DS_Store
+npm-debug.log*
+
+# Local SQLite database (Phase 3B backend). Never commit real business or
+# customer data, even in development. See README for how to seed a fresh
+# copy from the data files.
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-shm
+prisma/dev.db-wal
+
+# Real uploaded vehicle photos (Phase 3C, /admin/fleet/[id]), served by
+# app/uploads/[...path]/route.js rather than Next's public/ folder (see
+# that file's top comment for why). Actual business images, not source
+# code, a production deployment should point this at real object storage
+# instead of local disk. Never commit these.
+uploads/*
+!uploads/.gitkeep
