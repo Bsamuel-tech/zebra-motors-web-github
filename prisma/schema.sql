@@ -213,3 +213,50 @@ CREATE TABLE IF NOT EXISTS what_if_sessions (
   created_at           TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_what_if_sessions_created_at ON what_if_sessions(created_at);
+
+-- Leads (real prospective-customer records, business data foundation pass).
+-- A lead is created from a real, real-world signal, currently only the
+-- public contact form, never generated or guessed. status moves
+-- NEW -> CONTACTED -> CONVERTED (linked to a real customers row via
+-- converted_customer_id) or LOST. This is the top of Zebra's real customer
+-- pipeline, distinct from the customers table, which today is only
+-- populated once a real booking exists (Phase 3D).
+CREATE TABLE IF NOT EXISTS leads (
+  id                     TEXT PRIMARY KEY,
+  name                   TEXT NOT NULL,
+  email                  TEXT NOT NULL,
+  phone                  TEXT,
+  message                TEXT NOT NULL DEFAULT '',
+  source                 TEXT NOT NULL DEFAULT 'contact_form',
+  status                 TEXT NOT NULL DEFAULT 'NEW', -- NEW | CONTACTED | CONVERTED | LOST
+  vehicle_id             TEXT REFERENCES vehicles(id),
+  converted_customer_id  TEXT REFERENCES customers(id),
+  admin_notes            TEXT NOT NULL DEFAULT '',
+  created_at             TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at             TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+
+-- Vehicle maintenance log (business data foundation pass). Real service and
+-- repair history per vehicle, entered by staff, nothing here is scheduled
+-- or estimated automatically. When a record moves to IN_PROGRESS the
+-- vehicle's own status is set to MAINTENANCE, and reverted to AVAILABLE
+-- when the last open record on that vehicle is closed, see
+-- lib/db/maintenance.js for exactly what triggers that.
+CREATE TABLE IF NOT EXISTS vehicle_maintenance (
+  id              TEXT PRIMARY KEY,
+  vehicle_id      TEXT NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  type            TEXT NOT NULL DEFAULT 'service', -- service | repair | inspection | other
+  description     TEXT NOT NULL DEFAULT '',
+  status          TEXT NOT NULL DEFAULT 'SCHEDULED', -- SCHEDULED | IN_PROGRESS | DONE | CANCELLED
+  scheduled_date  TEXT,
+  completed_date  TEXT,
+  cost_rwf        INTEGER,
+  odometer_km     INTEGER,
+  notes           TEXT NOT NULL DEFAULT '',
+  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_maintenance_vehicle ON vehicle_maintenance(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_status ON vehicle_maintenance(status);

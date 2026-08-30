@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getCustomers } from "@/lib/db/customers";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +11,12 @@ export default function AdminCustomersPage() {
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>Customers</h1>
       <p className="muted" style={{ fontSize: 13.5, marginBottom: 20, maxWidth: 640 }}>
         {customers.length === 0
-          ? "No customer records yet, a customer is only created here from a real booking, which does not exist until Phase 3D. Nothing has been invented to fill this page."
-          : `${customers.length} customers on file.`}
+          ? "No customer records yet. A customer is created here from a real booking (not yet built, Phase 3D) or by converting a real lead on the "
+          : `${customers.length} customers on file. New records come from a real booking (not yet built, Phase 3D) or from converting a lead on the `}
+        <Link href="/admin/leads" style={{ fontWeight: 600 }}>
+          Leads
+        </Link>{" "}
+        page. Nothing has been invented to fill this page.
       </p>
 
       {customers.length > 0 && (

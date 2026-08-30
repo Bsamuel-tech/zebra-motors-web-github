@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getVehicles } from "@/lib/db/vehicles";
 import { getReviews } from "@/lib/db/reviews";
 import { getRecentAuditLog } from "@/lib/db/auditLog";
+import { getLeadsSummary } from "@/lib/db/leads";
+import { getUpcomingMaintenance } from "@/lib/db/maintenance";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,8 @@ export default function AdminDashboard() {
   const vehicles = getVehicles({ includeAll: true });
   const reviews = getReviews();
   const auditLog = getRecentAuditLog(10);
+  const leadsSummary = getLeadsSummary();
+  const upcomingMaintenance = getUpcomingMaintenance();
 
   const byStatus = vehicles.reduce((acc, v) => {
     acc[v.status] = (acc[v.status] || 0) + 1;
@@ -32,7 +36,7 @@ export default function AdminDashboard() {
         <StatCard label="Archived" value={byStatus.ARCHIVED || 0} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontSize: 15 }}>Reviews awaiting attention</h2>
@@ -52,6 +56,35 @@ export default function AdminDashboard() {
             </Link>
           </div>
           <p style={{ fontSize: 13.5 }}>{vehicles.length} vehicles in the database</p>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15 }}>Leads</h2>
+            <Link href="/admin/leads" style={{ fontSize: 12.5, fontWeight: 600 }}>
+              Manage →
+            </Link>
+          </div>
+          <p style={{ fontSize: 13.5 }}>
+            {leadsSummary.total} total, {leadsSummary.counts.NEW} new, {leadsSummary.counts.CONVERTED} converted
+          </p>
+        </div>
+        <div className="card" style={{ padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15 }}>Maintenance due or overdue</h2>
+            <Link href="/admin/maintenance" style={{ fontSize: 12.5, fontWeight: 600 }}>
+              Manage →
+            </Link>
+          </div>
+          {upcomingMaintenance.length === 0 ? (
+            <p style={{ fontSize: 13.5 }}>Nothing scheduled for today or earlier.</p>
+          ) : (
+            <p style={{ fontSize: 13.5 }}>
+              {upcomingMaintenance.length} record{upcomingMaintenance.length === 1 ? "" : "s"} need attention
+            </p>
+          )}
         </div>
       </div>
 
