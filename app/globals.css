@@ -12,6 +12,18 @@
   --sand: #b8862e;
   --danger: #a0402f;
   --white: #ffffff;
+
+  /* Zebra brand yellow, used strategically (primary buttons, active/selected
+     state, key highlights) and never as a whole-site color. This exact hex
+     (#f4c430, a warm marigold yellow) is a placeholder chosen to sit well
+     against the existing warm-neutral palette, it is NOT YET CONFIRMED as
+     Zebra Motors' official brand hex, swap it here in one place once
+     Zebra management confirms the real value or supplies a logo to match
+     against. --on-yellow is the text/icon color used on top of the yellow
+     fill, kept dark for contrast rather than white. */
+  --zebra-yellow: #f4c430;
+  --zebra-yellow-dark: #d9a916;
+  --on-yellow: #17160f;
 }
 
 * {
@@ -113,6 +125,17 @@ button {
 .main-nav .links a.active {
   color: var(--ink);
   font-weight: 700;
+  position: relative;
+  display: inline-block;
+}
+.main-nav .links a.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  background: var(--zebra-yellow);
 }
 .logo {
   font-family: "Instrument Serif", Georgia, serif;
@@ -134,13 +157,13 @@ button {
   font-family: "Work Sans", sans-serif;
 }
 .btn-primary {
-  background: var(--forest-dark);
-  color: #fff;
+  background: var(--zebra-yellow);
+  color: var(--on-yellow);
   padding: 15px 30px;
 }
 .btn-primary:hover {
-  background: var(--forest);
-  color: #fff;
+  background: var(--zebra-yellow-dark);
+  color: var(--on-yellow);
 }
 .btn-primary:disabled {
   background: var(--line);
@@ -190,6 +213,10 @@ button {
 .badge-muted {
   background: var(--paper-alt);
   color: var(--muted);
+}
+.badge-yellow {
+  background: var(--zebra-yellow);
+  color: var(--on-yellow);
 }
 .eyebrow {
   font-size: 12px;
@@ -246,9 +273,9 @@ button {
   cursor: pointer;
 }
 .chip.on {
-  background: var(--ink);
-  color: #fff;
-  border-color: var(--ink);
+  background: var(--zebra-yellow);
+  color: var(--on-yellow);
+  border-color: var(--zebra-yellow-dark);
 }
 
 /* footer -------------------------------------------------------------- */

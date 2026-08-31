@@ -260,3 +260,23 @@ CREATE TABLE IF NOT EXISTS vehicle_maintenance (
 );
 CREATE INDEX IF NOT EXISTS idx_maintenance_vehicle ON vehicle_maintenance(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_maintenance_status ON vehicle_maintenance(status);
+
+-- Rental extras (real, admin-controlled optional services). The booking
+-- flow used to show "Airport delivery, estimated RWF 15,000" and "GPS,
+-- estimated RWF 3,000/day" as fixed numbers nobody at Zebra had actually
+-- confirmed, that was a fabricated price and has been removed. Every row
+-- here starts inactive with no price, exactly the honest state until
+-- Zebra management confirms a real one, see lib/db/extras.js. The public
+-- booking flow only ever shows an extra when active = 1 AND (price_rwf is
+-- set OR pricing_type = 'CUSTOM_QUOTE').
+CREATE TABLE IF NOT EXISTS rental_extras (
+  id           TEXT PRIMARY KEY,
+  key          TEXT UNIQUE NOT NULL,
+  name         TEXT NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  pricing_type TEXT NOT NULL DEFAULT 'PER_BOOKING', -- PER_DAY | PER_BOOKING | PER_KM | CUSTOM_QUOTE
+  price_rwf    INTEGER,
+  active       INTEGER NOT NULL DEFAULT 0,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);

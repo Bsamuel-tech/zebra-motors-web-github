@@ -3,10 +3,13 @@
 import { useMemo, useState } from "react";
 import { runBusinessScenario } from "@/lib/whatIf/businessSimulation";
 
+// Zebra brand rule: no purple. PROJECTION previously used a purple swatch
+// (#6b4a9c), replaced with the dark ink tone already used for text so every
+// label color stays inside the approved brand palette.
 const LABEL_COLORS = {
   ASSUMPTION: "#8a6d1f",
   ESTIMATE: "#2F5D46",
-  PROJECTION: "#6b4a9c",
+  PROJECTION: "#17160f",
 };
 
 function LabelBadge({ type }) {
