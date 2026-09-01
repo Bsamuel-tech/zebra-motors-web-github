@@ -77,6 +77,16 @@ CREATE TABLE IF NOT EXISTS vehicles (
   short_description  TEXT,
   status             TEXT NOT NULL DEFAULT 'AVAILABLE', -- AVAILABLE|RESERVED|RENTED|MAINTENANCE|UNAVAILABLE|ARCHIVED
   featured           INTEGER NOT NULL DEFAULT 1,
+  -- Mileage policy (P3). UNLIMITED means no allowance tracking at all,
+  -- DAILY_ALLOWANCE compares actual trip distance against
+  -- included_km_per_day * rental days, TOTAL_ALLOWANCE compares against a
+  -- single included_total_km regardless of rental length. Every vehicle
+  -- starts UNLIMITED with no numbers set, exactly the honest default until
+  -- Zebra confirms a real policy for that vehicle, see lib/db/vehicles.js.
+  mileage_policy_type TEXT NOT NULL DEFAULT 'UNLIMITED', -- UNLIMITED | DAILY_ALLOWANCE | TOTAL_ALLOWANCE
+  included_km_per_day  INTEGER,
+  included_total_km    INTEGER,
+  extra_km_rate_rwf    INTEGER,
   created_at         TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -121,6 +131,13 @@ CREATE TABLE IF NOT EXISTS bookings (
   total_rwf      INTEGER NOT NULL,
   deposit_rwf    INTEGER,
   is_demo        INTEGER NOT NULL DEFAULT 1,
+  -- Real trip usage (P3), recorded by staff at vehicle handover and return,
+  -- never estimated. planned_distance_km is filled in only when it came
+  -- from a real routed trip (see route_cache below), otherwise it stays
+  -- null rather than guessed. See lib/db/bookings.js getMileageUsage().
+  pickup_odometer_km  INTEGER,
+  return_odometer_km  INTEGER,
+  planned_distance_km INTEGER,
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -335,3 +352,44 @@ CREATE TABLE IF NOT EXISTS custom_destination_requests (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_destination_photos_destination_id ON destination_photos(destination_id);
+
+-- Real popularity signal (P3): incremented whenever a customer adds a real
+-- published destination to a trip in the planner. This is an actual count
+-- of a real event, not an estimate, see lib/db/destinations.js
+-- recordDestinationSelection().
+CREATE TABLE IF NOT EXISTS destination_selections (
+  id             TEXT PRIMARY KEY,
+  destination_id TEXT NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
+  created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_destination_selections_destination_id ON destination_selections(destination_id);
+
+-- ---------------------------------------------------------------------------
+-- ROUTING AND GEOCODING CACHE (P2). Real distance and drive time only ever
+-- come from an actual routing API call, this table exists purely to avoid
+-- calling the free public OSRM demo router and Nominatim geocoder more than
+-- necessary, both have strict fair-use rate limits and no uptime guarantee,
+-- see lib/geo/provider.js for the full disclosure. A cache miss always
+-- falls through to a real API call or an honest "not available" state,
+-- nothing here is ever invented to fill a gap.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS geocode_cache (
+  id           TEXT PRIMARY KEY,
+  query        TEXT UNIQUE NOT NULL,
+  lat          REAL NOT NULL,
+  lng          REAL NOT NULL,
+  display_name TEXT,
+  provider     TEXT NOT NULL DEFAULT 'nominatim',
+  created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS route_cache (
+  id               TEXT PRIMARY KEY,
+  cache_key        TEXT UNIQUE NOT NULL,
+  distance_km      REAL NOT NULL,
+  duration_minutes REAL NOT NULL,
+  geometry         TEXT, -- JSON array of [lat,lng] points for drawing the route line
+  legs             TEXT, -- JSON array of {distanceKm, durationMinutes} per consecutive stop pair
+  provider         TEXT NOT NULL DEFAULT 'osrm-demo',
+  created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);

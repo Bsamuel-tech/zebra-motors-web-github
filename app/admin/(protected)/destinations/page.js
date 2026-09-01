@@ -41,6 +41,7 @@ export default function AdminDestinationsPage() {
               <th style={{ padding: "12px 16px" }}>Name</th>
               <th style={{ padding: "12px 16px" }}>Region</th>
               <th style={{ padding: "12px 16px" }}>Category</th>
+              <th style={{ padding: "12px 16px" }}>Added to trips</th>
               <th style={{ padding: "12px 16px" }}>Status</th>
               <th style={{ padding: "12px 16px" }}></th>
             </tr>
@@ -53,6 +54,7 @@ export default function AdminDestinationsPage() {
                 <td style={{ padding: "12px 16px" }}>
                   <span className={`badge ${CATEGORY_BADGE[d.category] || "badge-muted"}`}>{d.category.replace("_", " ")}</span>
                 </td>
+                <td style={{ padding: "12px 16px", color: "var(--muted)" }}>{d.selectionCount}</td>
                 <td style={{ padding: "12px 16px" }}>
                   <span className={`badge ${d.published ? "badge-forest" : "badge-muted"}`}>
                     {d.published ? "Published" : "Hidden"}

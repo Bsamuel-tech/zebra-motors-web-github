@@ -1,10 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Photo from "@/components/Photo";
+import TripRouteMap from "@/components/TripRouteMap";
 import { formatRWF, midRateRWF } from "@/data/vehicles";
 import { recommendVehicles } from "@/lib/recommend";
+import { saveTripToSession } from "@/lib/tripStorage";
+
+// Minutes -> "1 h 20 min", honest and never a guess since it only ever
+// formats a number that already came from a real routing result.
+function formatDuration(minutes) {
+  if (!Number.isFinite(minutes)) return "an unknown time";
+  const total = Math.round(minutes);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} h`;
+  return `${h} h ${m} min`;
+}
 
 let stopCounter = 0;
 function newStopId() {
@@ -22,6 +36,10 @@ function stopFromDestination(destination) {
     description: destination.description,
     recommendedVehicleCategory: destination.recommendedVehicleCategory,
     isCustom: false,
+    // A real coordinate from the destinations database, when the admin has
+    // already geocoded it, null otherwise, never guessed here.
+    lat: Number.isFinite(destination.lat) ? destination.lat : null,
+    lng: Number.isFinite(destination.lng) ? destination.lng : null,
     arrival: "",
     departure: "",
     durationDays: 1,
@@ -39,6 +57,14 @@ function stopFromCustomName(name) {
     description: "",
     recommendedVehicleCategory: null,
     isCustom: true,
+    lat: null,
+    lng: null,
+    // A custom stop has no coordinate yet, addCustom() below attempts a
+    // real geocode right after adding it, these track that attempt so the
+    // UI can show an honest "locating" / "not found" state instead of
+    // silently leaving the stop off the map forever.
+    locating: false,
+    geocodeAttempted: false,
     arrival: "",
     departure: "",
     durationDays: 1,
@@ -54,6 +80,7 @@ function stopFromCustomName(name) {
 // gets logged as a real demand signal (see /api/destinations/custom)
 // without ever publishing it to the public site on its own.
 export default function TripPlanner({ vehicles, destinations }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [customName, setCustomName] = useState("");
   const [stops, setStops] = useState(() =>
@@ -64,8 +91,69 @@ export default function TripPlanner({ vehicles, destinations }) {
   const [tripType, setTripType] = useState("roadtrip");
   const [budget, setBudget] = useState(35000);
   const [generated, setGenerated] = useState(false);
+  // Real route result from /api/geo/route (OSRM), or an honest
+  // "unavailable" state, never an invented distance or time (Rule 2). See
+  // lib/geo/provider.js for the provider this calls.
+  const [routeInfo, setRouteInfo] = useState({
+    status: "idle",
+    distanceKm: null,
+    durationMinutes: null,
+    legs: null,
+    geometry: null,
+  });
 
   const totalDays = stops.reduce((sum, s) => sum + (Number(s.durationDays) || 0), 0) || 1;
+
+  const pointedStops = stops.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng));
+  const routePointsKey = pointedStops.map((s) => `${s.id}:${s.lat},${s.lng}`).join("|");
+
+  // Recomputes the real driving route whenever the itinerary has been
+  // generated and the set of stops with a known location changes. Stops
+  // without a real coordinate yet (a custom place still being geocoded, or
+  // one that could not be located) are simply left out of the route call,
+  // never placed at a guessed position.
+  useEffect(() => {
+    if (!generated) return;
+    if (pointedStops.length < 2) {
+      setRouteInfo({ status: "unavailable", distanceKm: null, durationMinutes: null, legs: null, geometry: null });
+      return;
+    }
+    let cancelled = false;
+    setRouteInfo((prev) => ({ ...prev, status: "loading" }));
+    (async () => {
+      try {
+        const res = await fetch("/api/geo/route", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ points: pointedStops.map((s) => ({ lat: s.lat, lng: s.lng })) }),
+        });
+        const body = await res.json().catch(() => null);
+        const result = body?.result || null;
+        if (cancelled) return;
+        if (!result) {
+          setRouteInfo({ status: "unavailable", distanceKm: null, durationMinutes: null, legs: null, geometry: null });
+          return;
+        }
+        setRouteInfo({
+          status: "ready",
+          distanceKm: result.distanceKm,
+          durationMinutes: result.durationMinutes,
+          legs: result.legs,
+          geometry: result.geometry,
+        });
+      } catch {
+        // Timeout, network failure, or the free demo router being down,
+        // all shown the same honest way, never a guessed distance.
+        if (!cancelled) {
+          setRouteInfo({ status: "unavailable", distanceKm: null, durationMinutes: null, legs: null, geometry: null });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generated, routePointsKey]);
 
   const searchResults = useMemo(() => {
     if (!query.trim()) return [];
@@ -79,6 +167,13 @@ export default function TripPlanner({ vehicles, destinations }) {
   function addDestination(destination) {
     setStops((prev) => [...prev, stopFromDestination(destination)]);
     setQuery("");
+    // Real popularity signal, fire-and-forget, only for a real published
+    // destination, never for a custom stop (see logCustomDestinationRequest
+    // in addCustom below for that case). A failed call here should never
+    // block the customer from building their route.
+    if (destination.dbId) {
+      fetch(`/api/destinations/${destination.dbId}/select`, { method: "POST" }).catch(() => {});
+    }
   }
 
   async function addCustom() {
@@ -90,7 +185,8 @@ export default function TripPlanner({ vehicles, destinations }) {
       setCustomName("");
       return;
     }
-    setStops((prev) => [...prev, stopFromCustomName(name)]);
+    const stop = stopFromCustomName(name);
+    setStops((prev) => [...prev, { ...stop, locating: true }]);
     setCustomName("");
     try {
       await fetch("/api/destinations/custom", {
@@ -102,6 +198,27 @@ export default function TripPlanner({ vehicles, destinations }) {
       // A failed log call should never block the customer from planning
       // their trip, this is a background signal for Zebra, not a required
       // step.
+    }
+    // Best-effort real geocode so a customer's own typed place can still
+    // appear on the map and count toward real route distance. On any
+    // failure the stop just stays without a coordinate, an honest "not
+    // located" state shown in StopCard below, never a guessed position.
+    try {
+      const res = await fetch("/api/geo/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: name }),
+      });
+      const body = await res.json().catch(() => null);
+      const result = body?.result || null;
+      updateStop(stop.id, {
+        lat: result ? result.lat : null,
+        lng: result ? result.lng : null,
+        locating: false,
+        geocodeAttempted: true,
+      });
+    } catch {
+      updateStop(stop.id, { locating: false, geocodeAttempted: true });
     }
   }
 
@@ -129,6 +246,40 @@ export default function TripPlanner({ vehicles, destinations }) {
   const suggestedVehicleCategories = [
     ...new Set(stops.map((s) => s.recommendedVehicleCategory).filter(Boolean)),
   ];
+
+  const [savedNotice, setSavedNotice] = useState("");
+
+  // Builds the handoff payload for "Save trip" and "Book this trip". Only
+  // ever includes dates the customer actually typed on a stop, a default
+  // pickup/return time is not invented here, BookingFlow keeps its own
+  // honest defaults when these are missing.
+  function buildTripPayload() {
+    const firstArrival = stops.find((s) => s.arrival)?.arrival || null;
+    const lastDeparture = [...stops].reverse().find((s) => s.departure)?.departure || null;
+    const summaryLines = [
+      `Trip planned with Zebra's trip planner: ${stops.map((s) => s.name).join(" > ")}`,
+      `${stops.length} stop${stops.length === 1 ? "" : "s"}, ${totalDays} day${totalDays === 1 ? "" : "s"} planned`,
+      routeInfo.status === "ready"
+        ? `Real driving distance between stops: about ${Math.round(routeInfo.distanceKm)} km, about ${formatDuration(routeInfo.durationMinutes)}`
+        : null,
+    ].filter(Boolean);
+    return {
+      vehicleId: top?.vehicle?.id || null,
+      pickupAt: firstArrival ? `${firstArrival}T10:00` : null,
+      returnAt: lastDeparture ? `${lastDeparture}T10:00` : null,
+      summary: summaryLines.join("\n"),
+    };
+  }
+
+  function saveTrip() {
+    saveTripToSession(buildTripPayload());
+    setSavedNotice("Trip saved, it will carry over automatically if you open the booking page in this browser tab.");
+  }
+
+  function bookThisTrip() {
+    saveTripToSession(buildTripPayload());
+    router.push("/book?fromTrip=1");
+  }
 
   return (
     <div>
@@ -293,19 +444,70 @@ export default function TripPlanner({ vehicles, destinations }) {
                     <div className="muted" style={{ fontSize: 13, marginBottom: 6 }}>
                       Approximately RWF {formatRWF(midRateRWF(top.vehicle) * totalDays)} for {totalDays} days
                     </div>
-                    <Link href={`/book?vehicle=${top.vehicle.id}`} className="chip on">
-                      Book this itinerary
-                    </Link>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                      <button type="button" className="btn-outline" style={{ fontSize: 12.5, padding: "8px 14px" }} onClick={saveTrip}>
+                        Save trip
+                      </button>
+                      <button type="button" className="chip on" style={{ border: "none", cursor: "pointer" }} onClick={bookThisTrip}>
+                        Book this trip
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
+
+              {savedNotice && (
+                <p className="muted" style={{ fontSize: 12, marginTop: -10, marginBottom: 18 }}>
+                  {savedNotice}
+                </p>
+              )}
+
+              <div style={{ marginBottom: 18 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 10 }}>Route map and real drive distance</h3>
+                <TripRouteMap stops={stops} routeGeometry={routeInfo.geometry} />
+
+                {routeInfo.status === "loading" && (
+                  <p className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+                    Calculating real drive distance and time between your stops...
+                  </p>
+                )}
+
+                {routeInfo.status === "ready" && (
+                  <div style={{ marginTop: 10 }}>
+                    <p style={{ fontSize: 13.5, marginBottom: 8 }}>
+                      Real driving distance: about {Math.round(routeInfo.distanceKm)} km, about{" "}
+                      {formatDuration(routeInfo.durationMinutes)} of driving, from a free public routing
+                      service, not Zebra&apos;s own confirmed timing.
+                    </p>
+                    {Array.isArray(routeInfo.legs) && routeInfo.legs.length > 0 && (
+                      <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--ink-soft)" }}>
+                        {routeInfo.legs.map((leg, i) => (
+                          <li key={i}>
+                            Stop {i + 1} to stop {i + 2}: about {Math.round(leg.distanceKm)} km, about{" "}
+                            {formatDuration(leg.durationMinutes)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {routeInfo.status === "unavailable" && (
+                  <p className="muted" style={{ fontSize: 12.5, marginTop: 10 }}>
+                    {pointedStops.length < 2
+                      ? "Real drive distance needs at least two stops with a known location, add another stop or wait for a custom stop to be located."
+                      : "Real drive distance could not be calculated right now, the free routing service may be temporarily unavailable, this does not affect the rest of your itinerary."}
+                  </p>
+                )}
+              </div>
 
               <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.6 }}>
                 This itinerary is a suggestion generated from a transparent scoring of route,
                 terrain, group size and budget, not a certified tour package, and not a substitute
                 for checking current park regulations, gorilla trekking permit availability, or
-                road conditions directly. Real distance and drive time between stops are not
-                calculated yet, that needs a mapping provider (a later phase).
+                road conditions directly. Route distance and drive time above come from a free
+                public mapping service and only cover stops with a known real location, a stop
+                that could not be located is left out of that calculation rather than estimated.
               </p>
             </>
           )}
@@ -338,6 +540,16 @@ function StopCard({ stop, index, isFirst, isLast, onRemove, onMoveUp, onMoveDown
               {stop.isCustom && (
                 <span className="badge badge-muted" style={{ marginLeft: 8, fontSize: 9.5 }}>
                   Not yet in Zebra&apos;s catalogue
+                </span>
+              )}
+              {stop.isCustom && stop.locating && (
+                <span className="muted" style={{ marginLeft: 8, fontSize: 11 }}>
+                  Locating...
+                </span>
+              )}
+              {stop.isCustom && !stop.locating && stop.geocodeAttempted && !Number.isFinite(stop.lat) && (
+                <span className="muted" style={{ marginLeft: 8, fontSize: 11 }}>
+                  Location not found, left off the map
                 </span>
               )}
               {stop.region && <div className="muted" style={{ fontSize: 12 }}>{stop.region}</div>}

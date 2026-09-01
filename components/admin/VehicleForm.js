@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const STATUSES = ["AVAILABLE", "RESERVED", "RENTED", "MAINTENANCE", "UNAVAILABLE", "ARCHIVED"];
+const MILEAGE_POLICY_TYPES = ["UNLIMITED", "DAILY_ALLOWANCE", "TOTAL_ALLOWANCE"];
 
 const EMPTY = {
   make: "",
@@ -22,6 +23,10 @@ const EMPTY = {
   badge: "",
   description: "",
   status: "AVAILABLE",
+  mileagePolicyType: "UNLIMITED",
+  includedKmPerDay: "",
+  includedTotalKm: "",
+  extraKmRateRWF: "",
 };
 
 // Used for both /admin/fleet/new (vehicle is null) and /admin/fleet/[id]
@@ -49,6 +54,10 @@ export default function VehicleForm({ vehicle }) {
           badge: vehicle.badge || "",
           description: vehicle.description,
           status: vehicle.status,
+          mileagePolicyType: vehicle.mileagePolicyType || "UNLIMITED",
+          includedKmPerDay: vehicle.includedKmPerDay ?? "",
+          includedTotalKm: vehicle.includedTotalKm ?? "",
+          extraKmRateRWF: vehicle.extraKmRateRWF ?? "",
         }
       : EMPTY
   );
@@ -72,6 +81,18 @@ export default function VehicleForm({ vehicle }) {
       seats: Number(form.seats),
       dailyRateRWFMin: Number(form.dailyRateRWFMin),
       dailyRateRWFMax: Number(form.dailyRateRWFMax),
+      includedKmPerDay:
+        form.mileagePolicyType === "DAILY_ALLOWANCE" && form.includedKmPerDay !== ""
+          ? Number(form.includedKmPerDay)
+          : null,
+      includedTotalKm:
+        form.mileagePolicyType === "TOTAL_ALLOWANCE" && form.includedTotalKm !== ""
+          ? Number(form.includedTotalKm)
+          : null,
+      extraKmRateRWF:
+        form.mileagePolicyType !== "UNLIMITED" && form.extraKmRateRWF !== ""
+          ? Number(form.extraKmRateRWF)
+          : null,
     };
     const res = await fetch(isEdit ? `/api/vehicles/${vehicle.dbId}` : "/api/vehicles", {
       method: isEdit ? "PATCH" : "POST",
@@ -123,6 +144,46 @@ export default function VehicleForm({ vehicle }) {
           required
         />
         <SelectField label="Status" value={form.status} onChange={(v) => set("status", v)} options={STATUSES} />
+      </div>
+
+      <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Mileage policy</div>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12 }}>
+          Compared against the real pickup and return odometer readings recorded for each
+          booking, never an estimate. Defaults to unlimited until set here.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <SelectField
+            label="Policy type"
+            value={form.mileagePolicyType}
+            onChange={(v) => set("mileagePolicyType", v)}
+            options={MILEAGE_POLICY_TYPES}
+          />
+          {form.mileagePolicyType === "DAILY_ALLOWANCE" && (
+            <TextField
+              label="Included km per day"
+              type="number"
+              value={form.includedKmPerDay}
+              onChange={(v) => set("includedKmPerDay", v)}
+            />
+          )}
+          {form.mileagePolicyType === "TOTAL_ALLOWANCE" && (
+            <TextField
+              label="Included km, total rental"
+              type="number"
+              value={form.includedTotalKm}
+              onChange={(v) => set("includedTotalKm", v)}
+            />
+          )}
+          {form.mileagePolicyType !== "UNLIMITED" && (
+            <TextField
+              label="Extra km rate (RWF)"
+              type="number"
+              value={form.extraKmRateRWF}
+              onChange={(v) => set("extraKmRateRWF", v)}
+            />
+          )}
+        </div>
       </div>
 
       <div className="field" style={{ marginBottom: 20 }}>

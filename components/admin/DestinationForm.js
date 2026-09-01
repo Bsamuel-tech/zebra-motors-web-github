@@ -45,9 +45,35 @@ export default function DestinationForm({ destination }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState("");
 
   function set(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function geocode() {
+    if (!form.name) return;
+    setGeocoding(true);
+    setGeocodeError("");
+    const query = form.region ? `${form.name}, ${form.region}, Rwanda` : `${form.name}, Rwanda`;
+    try {
+      const res = await fetch("/api/geo/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!body.result) {
+        setGeocodeError("Could not find coordinates for this name, try adding the region above and searching again, or enter coordinates manually.");
+      } else {
+        set("lat", body.result.lat.toFixed(6));
+        set("lng", body.result.lng.toFixed(6));
+      }
+    } catch {
+      setGeocodeError("The lookup service did not respond, enter coordinates manually or try again.");
+    }
+    setGeocoding(false);
   }
 
   async function onSubmit(e) {
@@ -99,10 +125,20 @@ export default function DestinationForm({ destination }) {
         <TextField label="Longitude" value={form.lng} onChange={(v) => set("lng", v)} />
       </div>
 
-      <p className="muted" style={{ fontSize: 11.5, marginTop: -8, marginBottom: 16 }}>
-        Coordinates are optional until a mapping provider is connected (Phase 2), leave them
-        blank if not yet confirmed.
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: -8, marginBottom: 16 }}>
+        <button type="button" className="btn-outline" style={{ padding: "6px 12px", fontSize: 12 }} onClick={geocode} disabled={geocoding || !form.name}>
+          {geocoding ? "Looking up..." : "Look up coordinates"}
+        </button>
+        <p className="muted" style={{ fontSize: 11.5, margin: 0 }}>
+          Uses a free public lookup (OpenStreetMap), always review the result before saving, it
+          is a starting point, not a confirmed survey coordinate.
+        </p>
+      </div>
+      {geocodeError && (
+        <p className="confirm-note" style={{ display: "block", fontSize: 12, marginTop: -10, marginBottom: 16 }}>
+          {geocodeError}
+        </p>
+      )}
 
       <div className="field" style={{ marginBottom: 16 }}>
         <label>Description</label>

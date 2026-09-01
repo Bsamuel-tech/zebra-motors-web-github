@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Photo from "./Photo";
 import { formatRWF, midRateRWF, priceRangeLabel } from "@/data/vehicles";
+import { loadTripFromSession, clearTripSession } from "@/lib/tripStorage";
 
 const STEPS = ["Vehicle & dates", "Your details", "Documents", "Payment", "Confirmation"];
 
@@ -123,9 +124,31 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [requestRef, setRequestRef] = useState("");
+  const [tripSummary, setTripSummary] = useState(null);
 
   const vehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0] || null;
   const duration = useMemo(() => computeDuration(pickupAt, returnAt), [pickupAt, returnAt]);
+
+  // "Book this trip" in the trip planner saves the route to sessionStorage
+  // then sends the customer here with ?fromTrip=1, this transfers it into
+  // the booking flow without asking them to re-enter anything (per the
+  // trip planner spec). Read once on mount, after mount rather than in a
+  // useState initializer, so the server-rendered and client-hydrated
+  // markup match and this never silently overwrites a vehicle/date the
+  // customer picks afterward.
+  useEffect(() => {
+    if (params.get("fromTrip") !== "1") return;
+    const trip = loadTripFromSession();
+    if (!trip) return;
+    if (trip.vehicleId && vehicles.some((v) => v.id === trip.vehicleId)) {
+      setVehicleId(trip.vehicleId);
+    }
+    if (trip.pickupAt) setPickupAt(trip.pickupAt);
+    if (trip.returnAt) setReturnAt(trip.returnAt);
+    if (trip.summary) setTripSummary(trip.summary);
+    clearTripSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggleExtra(id) {
     setSelectedExtraIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -181,6 +204,7 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
     setSubmitError("");
     const selectedExtraNames = extras.filter((e) => selectedExtraIds[e.id]).map((e) => e.name);
     const messageLines = [
+      tripSummary ? `${tripSummary}` : null,
       `Vehicle: ${vehicle.name}`,
       `Pickup: ${new Date(pickupAt).toLocaleString()} at ${pickupLocation}`,
       `Return: ${new Date(returnAt).toLocaleString()} at ${sameDropoff ? pickupLocation : dropoffLocation}`,
@@ -259,6 +283,7 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
                   dropoffLocation={dropoffLocation}
                   setDropoffLocation={setDropoffLocation}
                   duration={duration}
+                  tripSummary={tripSummary}
                 />
               )}
               {step === 1 && (
@@ -409,6 +434,7 @@ function StepVehicle({
   dropoffLocation,
   setDropoffLocation,
   duration,
+  tripSummary,
 }) {
   return (
     <div>
@@ -416,6 +442,13 @@ function StepVehicle({
       <p className="muted" style={{ fontSize: 14, marginBottom: 24 }}>
         Every field below is yours to change, nothing is fixed until Zebra confirms your request.
       </p>
+
+      {tripSummary && (
+        <div className="card" style={{ padding: 14, marginBottom: 20, fontSize: 12.5, whiteSpace: "pre-line" }}>
+          <strong style={{ fontSize: 12 }}>Carried over from your trip plan</strong>
+          <div className="muted" style={{ marginTop: 4 }}>{tripSummary}</div>
+        </div>
+      )}
       <div className="grid-2" style={{ marginBottom: 10 }}>
         <div className="field">
           <label>Pickup date &amp; time</label>
