@@ -1,16 +1,20 @@
 import Link from "next/link";
 import TripPlanner from "@/components/TripPlanner";
 import { getVehicles } from "@/lib/db/vehicles";
+import { getDestinations } from "@/lib/db/destinations";
 
-// Server component: reads the real fleet from the database (Phase 3B) and
-// hands it to the interactive trip planner.
+// Server component: reads the real fleet and the real published
+// destinations catalogue from the database and hands both to the
+// interactive trip planner (P1: real destinations replacing the old
+// hardcoded 5-name list).
 export const dynamic = "force-dynamic";
 
 export default function PlanTripPage() {
   const vehicles = getVehicles();
+  const destinations = getDestinations({ publishedOnly: true });
   return (
     <div>
-      <TripPlanner vehicles={vehicles} />
+      <TripPlanner vehicles={vehicles} destinations={destinations} />
       <div className="wrap" style={{ padding: "0 32px 60px 32px" }}>
         <div className="card" style={{ padding: 18, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>

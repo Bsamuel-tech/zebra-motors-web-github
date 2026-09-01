@@ -280,3 +280,58 @@ CREATE TABLE IF NOT EXISTS rental_extras (
   created_at   TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ---------------------------------------------------------------------------
+-- DESTINATIONS (P1 of the trip planner spec). Real, admin-managed places a
+-- trip can stop at, replacing the hardcoded 5-name list that used to live in
+-- components/TripPlanner.js. Nothing here is invented, a destination starts
+-- unpublished with no photo until an admin fills it in, exactly like a new
+-- vehicle. category is a plain TEXT column holding one of the
+-- DestinationCategory values, checked in application code (lib/db/destinations.js)
+-- rather than a SQLite CHECK constraint, so a future admin-managed category
+-- list does not require a schema migration.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS destinations (
+  id                          TEXT PRIMARY KEY,
+  slug                        TEXT UNIQUE NOT NULL,
+  name                        TEXT NOT NULL,
+  description                 TEXT NOT NULL DEFAULT '',
+  lat                         REAL,
+  lng                         REAL,
+  region                      TEXT NOT NULL DEFAULT '',
+  category                    TEXT NOT NULL DEFAULT 'CUSTOM', -- CITY | NATIONAL_PARK | LAKE | MOUNTAIN | AIRPORT | HOTEL | ATTRACTION | CUSTOM
+  recommended_vehicle_category TEXT,
+  notes                       TEXT NOT NULL DEFAULT '',
+  published                   INTEGER NOT NULL DEFAULT 0,
+  created_at                  TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at                  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Real admin-uploaded photos only, the same pattern as vehicle_photos, so a
+-- destination with no upload yet shows the same grey placeholder a vehicle
+-- does rather than a stock or generated image (Rule 5). is_primary is what
+-- the public site treats as the destination's "hero image".
+CREATE TABLE IF NOT EXISTS destination_photos (
+  id             TEXT PRIMARY KEY,
+  destination_id TEXT NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
+  url            TEXT NOT NULL,
+  alt_text       TEXT NOT NULL DEFAULT '',
+  is_primary     INTEGER NOT NULL DEFAULT 0,
+  sort_order     INTEGER NOT NULL DEFAULT 0,
+  created_at     TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- A customer typing a place that is not in the real catalogue above (the
+-- trip planner allows this, see components/TripPlanner.js) is a real signal
+-- of demand worth Zebra seeing, but it must never silently become a public
+-- destination on its own, that would let a site visitor publish content.
+-- This table only ever grows from real customer input and is only ever
+-- read by an admin deciding whether to add a real destinations row.
+CREATE TABLE IF NOT EXISTS custom_destination_requests (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  notes      TEXT NOT NULL DEFAULT '',
+  source     TEXT NOT NULL DEFAULT 'trip_planner',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_destination_photos_destination_id ON destination_photos(destination_id);
