@@ -8,7 +8,12 @@ const CSP = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data:",
+  // 'self data:' covers vehicle/destination photos and inline images.
+  // The OpenStreetMap tile subdomains are added for components/TripRouteMap.js
+  // (P2's real route map), the free OSM tile servers Zebra's mapping
+  // provider choice uses, without this the map would render with no tiles
+  // at all once a stop has a real coordinate (see lib/geo/provider.js).
+  "img-src 'self' data: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
   "connect-src 'self'",
   "worker-src 'self'",
   "manifest-src 'self'",
