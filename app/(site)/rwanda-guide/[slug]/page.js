@@ -5,16 +5,16 @@ import { recordPageView } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }) {
-  const article = getArticleBySlug(params.slug);
+export async function generateMetadata({ params }) {
+  const article = await getArticleBySlug(params.slug);
   if (!article) return {};
   return { title: `${article.title}, Zebra Motors` };
 }
 
-export default function GuideArticlePage({ params }) {
-  const article = getArticleBySlug(params.slug);
+export default async function GuideArticlePage({ params }) {
+  const article = await getArticleBySlug(params.slug);
   if (!article || article.status !== "published") notFound();
-  recordPageView(`/rwanda-guide/${article.slug}`);
+  await recordPageView(`/rwanda-guide/${article.slug}`);
 
   return (
     <div className="wrap" style={{ paddingTop: 30, paddingBottom: 70, maxWidth: 720 }}>

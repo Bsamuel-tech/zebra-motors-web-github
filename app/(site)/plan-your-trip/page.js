@@ -9,9 +9,9 @@ import { getDestinations } from "@/lib/db/destinations";
 // hardcoded 5-name list).
 export const dynamic = "force-dynamic";
 
-export default function PlanTripPage() {
-  const vehicles = getVehicles();
-  const destinations = getDestinations({ publishedOnly: true });
+export default async function PlanTripPage() {
+  const vehicles = await getVehicles();
+  const destinations = await getDestinations({ publishedOnly: true });
   return (
     <div>
       <TripPlanner vehicles={vehicles} destinations={destinations} />

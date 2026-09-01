@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const existing = getMaintenanceRecordById(params.id);
+  const existing = await getMaintenanceRecordById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
@@ -18,7 +18,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: `status must be one of ${VALID_STATUSES.join(", ")}.` }, { status: 400 });
   }
 
-  const record = updateMaintenanceRecord(params.id, {
+  const record = await updateMaintenanceRecord(params.id, {
     status: body.status,
     completedDate: body.completedDate,
     costRWF: body.costRWF != null && body.costRWF !== "" ? Number(body.costRWF) : body.costRWF,
@@ -26,7 +26,7 @@ export async function PATCH(request, { params }) {
     notes: body.notes,
   });
 
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "MaintenanceRecord",

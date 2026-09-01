@@ -7,12 +7,12 @@ import { getUpcomingMaintenance } from "@/lib/db/maintenance";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminDashboard() {
-  const vehicles = getVehicles({ includeAll: true });
-  const reviews = getReviews();
-  const auditLog = getRecentAuditLog(10);
-  const leadsSummary = getLeadsSummary();
-  const upcomingMaintenance = getUpcomingMaintenance();
+export default async function AdminDashboard() {
+  const vehicles = await getVehicles({ includeAll: true });
+  const reviews = await getReviews();
+  const auditLog = await getRecentAuditLog(10);
+  const leadsSummary = await getLeadsSummary();
+  const upcomingMaintenance = await getUpcomingMaintenance();
 
   const byStatus = vehicles.reduce((acc, v) => {
     acc[v.status] = (acc[v.status] || 0) + 1;
@@ -29,14 +29,14 @@ export default function AdminDashboard() {
         were real business performance, which this platform&apos;s own rules do not allow.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div className="grid-4" style={{ gap: 16, marginBottom: 32 }}>
         <StatCard label="Total vehicles" value={vehicles.length} />
         <StatCard label="Available" value={byStatus.AVAILABLE || 0} />
         <StatCard label="In maintenance" value={byStatus.MAINTENANCE || 0} />
         <StatCard label="Archived" value={byStatus.ARCHIVED || 0} />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
+      <div className="grid-2" style={{ gap: 24, marginBottom: 24 }}>
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontSize: 15 }}>Reviews awaiting attention</h2>
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
+      <div className="grid-2" style={{ gap: 24, marginBottom: 32 }}>
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontSize: 15 }}>Leads</h2>

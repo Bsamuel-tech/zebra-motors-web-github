@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/requireAdmin";
 import { logAction } from "@/lib/db/auditLog";
 
 export async function GET() {
-  return NextResponse.json({ settings: getSettings() });
+  return NextResponse.json({ settings: await getSettings() });
 }
 
 export async function PATCH(request) {
@@ -14,8 +14,8 @@ export async function PATCH(request) {
   }
   const patch = await request.json().catch(() => null);
   if (!patch) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  const settings = updateSettings(patch);
-  logAction({
+  const settings = await updateSettings(patch);
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "BusinessSettings",

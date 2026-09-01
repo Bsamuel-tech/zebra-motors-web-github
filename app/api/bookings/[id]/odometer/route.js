@@ -15,10 +15,10 @@ export async function PATCH(request, { params }) {
   if (!patch || (patch.pickupOdometerKm === undefined && patch.returnOdometerKm === undefined)) {
     return NextResponse.json({ error: "pickupOdometerKm and/or returnOdometerKm are required." }, { status: 400 });
   }
-  const existing = getBookingById(params.id);
+  const existing = await getBookingById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  const booking = recordOdometer(params.id, patch);
-  logAction({
+  const booking = await recordOdometer(params.id, patch);
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "Booking",

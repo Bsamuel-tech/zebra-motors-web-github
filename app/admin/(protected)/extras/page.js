@@ -3,8 +3,8 @@ import ExtrasTable from "@/components/admin/ExtrasTable";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminExtrasPage() {
-  const extras = getExtras();
+export default async function AdminExtrasPage() {
+  const extras = await getExtras();
   const liveCount = extras.filter((e) => e.active).length;
 
   return (

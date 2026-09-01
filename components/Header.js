@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { telLink, whatsappLink } from "@/data/settings";
@@ -23,6 +23,29 @@ export default function Header({ settings }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const waLink = whatsappLink({ settings });
+
+  // Real signed-in state, not decorative: this link used to always say
+  // "Sign in" even for a signed-in customer, because there was no real
+  // customer session to check. Now there is (Section 7/8), so it checks
+  // once on mount and reflects the actual account, name included.
+  const [account, setAccount] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/customer-auth/me")
+      .then((res) => (res.ok ? res.json() : { customer: null }))
+      .then((data) => {
+        if (!cancelled) setAccount(data.customer || null);
+      })
+      .catch(() => {
+        if (!cancelled) setAccount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  const accountLabel = account ? account.name.split(" ")[0] : "Sign in";
+  const accountHref = account ? "/account" : "/login";
 
   return (
     <div>
@@ -60,8 +83,8 @@ export default function Header({ settings }) {
           ))}
         </div>
         <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-          <Link href="/login" className="hide-mobile" style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink)" }}>
-            Sign in
+          <Link href={accountHref} className="hide-mobile" style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink)" }}>
+            {accountLabel}
           </Link>
           <Link href="/cars" className="btn-outline hide-mobile" style={{ padding: "10px 20px", fontSize: 13.5 }}>
             Find a Car
@@ -106,8 +129,8 @@ export default function Header({ settings }) {
             </a>
           )}
           <div className="mobile-menu-divider" />
-          <Link href="/login" onClick={() => setMenuOpen(false)}>
-            Sign in
+          <Link href={accountHref} onClick={() => setMenuOpen(false)}>
+            {accountLabel}
           </Link>
           <Link href="/cars" className="btn-primary" style={{ textAlign: "center" }} onClick={() => setMenuOpen(false)}>
             Find a Car

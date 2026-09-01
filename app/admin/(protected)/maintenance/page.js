@@ -13,8 +13,8 @@ const STATUS_BADGE = {
 // Fleet-wide read view, real records only, joined from every vehicle.
 // Adding or updating a record happens on that vehicle's own Fleet edit
 // page, this page is for seeing the whole picture at once.
-export default function AdminMaintenancePage() {
-  const records = getAllMaintenanceRecords();
+export default async function AdminMaintenancePage() {
+  const records = await getAllMaintenanceRecords();
 
   return (
     <div style={{ padding: "32px 36px" }}>

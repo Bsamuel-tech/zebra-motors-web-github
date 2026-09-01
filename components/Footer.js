@@ -6,15 +6,7 @@ import { telLink, mailtoLink } from "@/data/settings";
 export default function Footer({ settings }) {
   return (
     <footer className="site-footer">
-      <div
-        className="wrap"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
-          gap: 40,
-          marginBottom: 40,
-        }}
-      >
+      <div className="wrap footer-grid">
         <div>
           <div className="serif" style={{ fontSize: 21, color: "#fff", marginBottom: 12 }}>
             ZEBRA MOTORS

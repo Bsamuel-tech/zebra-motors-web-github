@@ -13,8 +13,8 @@ const STATUS_COLORS = {
   ARCHIVED: "badge-muted",
 };
 
-export default function AdminFleetPage() {
-  const vehicles = getVehicles({ includeAll: true });
+export default async function AdminFleetPage() {
+  const vehicles = await getVehicles({ includeAll: true });
 
   return (
     <div style={{ padding: "32px 36px" }}>

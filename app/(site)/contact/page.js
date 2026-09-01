@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/db/settings";
 
 export const dynamic = "force-dynamic";
 
-export default function ContactPage() {
-  const settings = getSettings();
+export default async function ContactPage() {
+  const settings = await getSettings();
   return <ContactForm settings={settings} />;
 }

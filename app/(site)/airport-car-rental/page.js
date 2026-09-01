@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/db/settings";
 
 export const dynamic = "force-dynamic";
 
-export default function AirportPage() {
-  const settings = getSettings();
+export default async function AirportPage() {
+  const settings = await getSettings();
   return <AirportBookingForm settings={settings} />;
 }

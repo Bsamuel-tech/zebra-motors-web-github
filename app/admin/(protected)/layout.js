@@ -7,7 +7,7 @@ import AdminSidebar from "@/components/AdminSidebar";
 export default async function ProtectedAdminLayout({ children }) {
   const session = await getSession();
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--paper-alt)" }}>
+    <div className="admin-shell">
       <AdminSidebar user={session} />
       <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
     </div>

@@ -4,8 +4,8 @@ import FaqList from "@/components/admin/FaqList";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminFaqPage() {
-  const faqs = getFaqs();
+export default async function AdminFaqPage() {
+  const faqs = await getFaqs();
 
   return (
     <div style={{ padding: "32px 36px" }}>

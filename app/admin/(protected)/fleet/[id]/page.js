@@ -7,10 +7,10 @@ import MaintenanceManager from "@/components/admin/MaintenanceManager";
 
 export const dynamic = "force-dynamic";
 
-export default function EditVehiclePage({ params }) {
-  const vehicle = getVehicleByDbId(params.id);
+export default async function EditVehiclePage({ params }) {
+  const vehicle = await getVehicleByDbId(params.id);
   if (!vehicle) notFound();
-  const maintenanceRecords = getMaintenanceRecords(vehicle.dbId);
+  const maintenanceRecords = await getMaintenanceRecords(vehicle.dbId);
 
   return (
     <div style={{ padding: "32px 36px" }}>

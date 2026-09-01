@@ -13,7 +13,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
 
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user) {
     return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
   }
@@ -30,7 +30,7 @@ export async function POST(request) {
     role: user.role,
   });
 
-  logAction({ userId: user.id, action: "LOGIN", entityType: "User", entityId: user.id });
+  await logAction({ userId: user.id, action: "LOGIN", entityType: "User", entityId: user.id });
 
   const response = NextResponse.json({
     user: { id: user.id, email: user.email, name: user.name, role: user.role },

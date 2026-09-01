@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Photo from "./Photo";
 import { formatRWF, midRateRWF, priceRangeLabel } from "@/data/vehicles";
+import { whatsappLink, telLink, mailtoLink } from "@/data/settings";
 import { loadTripFromSession, clearTripSession } from "@/lib/tripStorage";
 
 const STEPS = ["Vehicle & dates", "Your details", "Documents", "Payment", "Confirmation"];
@@ -102,7 +103,7 @@ function durationLabel(duration) {
   return parts.length ? parts.join(", ") : "less than a minute";
 }
 
-export default function BookingFlow({ vehicles = [], extras = [] }) {
+export default function BookingFlow({ vehicles = [], extras = [], settings = null }) {
   const params = useSearchParams();
 
   const [step, setStep] = useState(0);
@@ -202,41 +203,30 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
     if (!canSubmit) return;
     setSubmitting(true);
     setSubmitError("");
-    const selectedExtraNames = extras.filter((e) => selectedExtraIds[e.id]).map((e) => e.name);
-    const messageLines = [
-      tripSummary ? `${tripSummary}` : null,
-      `Vehicle: ${vehicle.name}`,
-      `Pickup: ${new Date(pickupAt).toLocaleString()} at ${pickupLocation}`,
-      `Return: ${new Date(returnAt).toLocaleString()} at ${sameDropoff ? pickupLocation : dropoffLocation}`,
-      `Rental duration: ${durationLabel(duration)} (${duration.billableDays} billable rental day${duration.billableDays === 1 ? "" : "s"})`,
-      `Self-drive or driver: ${driveMode === "self" ? "Self-drive" : "With a professional driver"}`,
-      selectedExtraNames.length ? `Requested extras: ${selectedExtraNames.join(", ")}` : "Requested extras: none",
-      pricing?.total !== null && pricing?.total !== undefined ? `Estimated total (before extras priced by Zebra): RWF ${formatRWF(pricing.total)}` : null,
-      `Payment preference: ${paymentPreference === "deposit" ? "Deposit to reserve, balance on pickup" : "Pay in full"} via ${method}`,
-      details.country ? `Country of residence: ${details.country}` : null,
-    ].filter(Boolean);
 
     try {
-      const res = await fetch("/api/leads", {
+      const res = await fetch("/api/booking-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: details.name,
-          email: details.email,
-          phone: details.phone,
-          message: messageLines.join("\n"),
-          source: "booking_request",
-          vehicleId: vehicle.dbId,
+          vehicleDbId: vehicle.dbId,
+          pickupDate: pickupAt,
+          returnDate: returnAt,
+          customerName: details.name,
+          customerEmail: details.email,
+          customerPhone: details.phone,
+          customerCountry: details.country,
+          serviceType: driveMode === "self" ? "self-drive" : "chauffeur",
+          totalRWF: pricing?.total,
         }),
       });
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         setSubmitError(body.error || "Could not send your booking request, please try again.");
         setSubmitting(false);
         return;
       }
-      const body = await res.json();
-      setRequestRef(`ZM-${body.lead.id.slice(0, 8).toUpperCase()}`);
+      setRequestRef(body.booking.bookingNumber);
       setSubmitting(false);
       next();
     } catch {
@@ -335,7 +325,7 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
               </div>
             </div>
 
-            <div style={{ width: 360, flexShrink: 0 }}>
+            <div style={{ width: "100%", maxWidth: 360, flexShrink: 0 }}>
               <div className="card" style={{ padding: 22 }}>
                 <div style={{ display: "flex", gap: 14, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid var(--line)" }}>
                   <Photo height={70} style={{ width: 96, flexShrink: 0 }} />
@@ -392,6 +382,7 @@ export default function BookingFlow({ vehicles = [], extras = [] }) {
             dropoffLocation={sameDropoff ? pickupLocation : dropoffLocation}
             duration={duration}
             total={pricing.total}
+            settings={settings}
           />
         )}
       </div>
@@ -615,18 +606,22 @@ function ExtraRow({ extra, checked, onChange }) {
   );
 }
 
+// Document upload isn't built yet, this used to show "Upload" buttons that
+// did nothing at all when clicked, a fake affordance (Rule 5). Until real
+// file upload exists here, this honestly says what to bring instead of
+// pretending to collect anything.
 function StepDocuments() {
   return (
     <div>
       <h1 style={{ fontSize: 26, marginBottom: 6 }}>Documents</h1>
       <p className="muted" style={{ fontSize: 14, marginBottom: 24 }}>
-        Uploaded documents are stored securely and only used to verify your rental. See our
-        privacy policy.
+        Document upload isn&apos;t available on this site yet. Bring these with you at pickup, or
+        email them to Zebra Motors ahead of time if you&apos;d like them checked in advance.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <UploadRow label="Passport" />
-        <UploadRow label="Driving licence" />
-        <UploadRow label="International Driving Permit (if applicable)" optional />
+        <DocumentRow label="Passport" />
+        <DocumentRow label="Driving licence" />
+        <DocumentRow label="International Driving Permit (if applicable)" optional />
       </div>
       <div className="confirm-note" style={{ display: "block", marginTop: 20 }}>
         Whether an International Driving Permit is required varies by nationality. Confirm with
@@ -636,16 +631,14 @@ function StepDocuments() {
   );
 }
 
-function UploadRow({ label, optional }) {
+function DocumentRow({ label, optional }) {
   return (
     <div className="card" style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
       <div>
         <div style={{ fontSize: 14 }}>{label}</div>
         {optional && <div className="muted" style={{ fontSize: 12 }}>Optional</div>}
       </div>
-      <button className="btn-outline" style={{ padding: "8px 16px", fontSize: 13 }}>
-        Upload
-      </button>
+      <span className="muted" style={{ fontSize: 12.5 }}>Bring at pickup</span>
     </div>
   );
 }
@@ -707,7 +700,21 @@ function StepPayment({ paymentPreference, setPaymentPreference, method, setMetho
   );
 }
 
-function Confirmation({ vehicle, requestRef, pickupAt, returnAt, pickupLocation, dropoffLocation, duration, total }) {
+function Confirmation({ vehicle, requestRef, pickupAt, returnAt, pickupLocation, dropoffLocation, duration, total, settings }) {
+  // A real WhatsApp fallback (Section 10): pre-fills the message with this
+  // exact request's real reference and dates so following up costs the
+  // customer nothing extra to type. whatsappLink() returns null when no
+  // WhatsApp number is confirmed (see data/settings.js), in which case this
+  // falls back to a phone/email line instead of showing a dead link.
+  const waLink = settings
+    ? whatsappLink({
+        settings,
+        vehicleName: `${vehicle.name} (request ${requestRef})`,
+        fromDate: new Date(pickupAt).toLocaleDateString(),
+        toDate: new Date(returnAt).toLocaleDateString(),
+      })
+    : null;
+
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
       <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#E3EEE8", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px auto" }}>
@@ -743,7 +750,26 @@ function Confirmation({ vehicle, requestRef, pickupAt, returnAt, pickupLocation,
           <div style={{ fontSize: 13.5 }}>Estimated total: RWF {formatRWF(total)}</div>
         )}
       </div>
-      <Link href="/" className="btn-primary">
+
+      <div style={{ marginBottom: 24 }}>
+        <p className="muted" style={{ fontSize: 13, marginBottom: 12 }}>
+          Want to follow up sooner, or add anything to your request?
+        </p>
+        {waLink ? (
+          <a href={waLink} target="_blank" rel="noreferrer" className="btn-primary" style={{ display: "inline-block" }}>
+            Message Zebra Motors on WhatsApp
+          </a>
+        ) : (
+          settings && (
+            <div style={{ fontSize: 13.5 }}>
+              Call <a href={telLink(settings)}>{settings.phoneDisplay}</a> or email{" "}
+              <a href={mailtoLink(settings)}>{settings.email}</a>, mention reference {requestRef}.
+            </div>
+          )
+        )}
+      </div>
+
+      <Link href="/" className="btn-outline">
         Back to home
       </Link>
     </div>

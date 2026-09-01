@@ -15,7 +15,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Name, email, and message are required." }, { status: 400 });
   }
 
-  const lead = createLead({
+  const lead = await createLead({
     name,
     email,
     phone,

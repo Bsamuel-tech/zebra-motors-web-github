@@ -116,7 +116,7 @@ export default function VehicleForm({ vehicle }) {
 
   return (
     <form onSubmit={onSubmit} style={{ maxWidth: 640 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <TextField label="Make" value={form.make} onChange={(v) => set("make", v)} required />
         <TextField label="Model" value={form.model} onChange={(v) => set("model", v)} required />
         <TextField label="Display name" value={form.name} onChange={(v) => set("name", v)} required />
@@ -152,7 +152,7 @@ export default function VehicleForm({ vehicle }) {
           Compared against the real pickup and return odometer readings recorded for each
           booking, never an estimate. Defaults to unlimited until set here.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div className="grid-2" style={{ gap: 16 }}>
           <SelectField
             label="Policy type"
             value={form.mileagePolicyType}

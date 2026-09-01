@@ -14,14 +14,14 @@ export async function PATCH(request, { params }) {
   if (patch.status && !VALID_STATUSES.includes(patch.status)) {
     return NextResponse.json({ error: `status must be one of ${VALID_STATUSES.join(", ")}.` }, { status: 400 });
   }
-  const existing = getLeadById(params.id);
+  const existing = await getLeadById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
-  const lead = updateLeadStatus(params.id, {
+  const lead = await updateLeadStatus(params.id, {
     status: patch.status,
     adminNotes: typeof patch.adminNotes === "string" ? patch.adminNotes : undefined,
   });
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "Lead",

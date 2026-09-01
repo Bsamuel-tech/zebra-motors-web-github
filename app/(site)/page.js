@@ -19,10 +19,10 @@ export const dynamic = "force-dynamic";
 // country or date is shown because the source page does not list either,
 // and neither is invented here.
 
-export default function HomePage() {
-  recordPageView("/");
-  const featured = getVehicles();
-  const REVIEWS = getReviews({ publishedOnly: true });
+export default async function HomePage() {
+  await recordPageView("/");
+  const featured = await getVehicles();
+  const REVIEWS = await getReviews({ publishedOnly: true });
 
   return (
     <div>

@@ -3,8 +3,8 @@ import BookingForm from "@/components/admin/BookingForm";
 
 export const dynamic = "force-dynamic";
 
-export default function NewBookingPage() {
-  const vehicles = getVehicles({ includeAll: true });
+export default async function NewBookingPage() {
+  const vehicles = await getVehicles({ includeAll: true });
   return (
     <div style={{ padding: "32px 36px" }}>
       <h1 style={{ fontSize: 24, marginBottom: 4 }}>Add booking</h1>

@@ -70,7 +70,7 @@ export default function DestinationPhotoManager({ destinationId, photos }) {
       )}
 
       {photos.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+        <div className="grid-3" style={{ gap: 12, marginBottom: 20 }}>
           {photos.map((p) => (
             <div key={p.id} className="card" style={{ overflow: "hidden" }}>
               <img src={p.url} alt={p.altText} style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />

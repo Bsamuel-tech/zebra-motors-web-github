@@ -9,9 +9,9 @@ import AdminWhatIfSimulator from "@/components/admin/AdminWhatIfSimulator";
 // simulation tool for admins, it must never work from a stale snapshot.
 export const dynamic = "force-dynamic";
 
-export default function AdminWhatIfPage() {
-  const vehicles = getVehicles();
-  const bookings = getBookings();
+export default async function AdminWhatIfPage() {
+  const vehicles = await getVehicles();
+  const bookings = await getBookings();
   const realBookings = bookings.filter((b) => !b.isDemo);
 
   const fleetCount = vehicles.length;
@@ -29,7 +29,7 @@ export default function AdminWhatIfPage() {
     hasSufficientHistory: hasSufficientHistory(realBookings.length),
   };
 
-  const whatIfUsage = getWhatIfAnalyticsSummary();
+  const whatIfUsage = await getWhatIfAnalyticsSummary();
 
   return (
     <div style={{ padding: "32px 36px" }}>

@@ -6,16 +6,16 @@ import { recordPageView } from "@/lib/db/analytics";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }) {
-  const pkg = getPackageBySlug(params.slug);
+export async function generateMetadata({ params }) {
+  const pkg = await getPackageBySlug(params.slug);
   if (!pkg) return {};
   return { title: `${pkg.name}, Zebra Motors` };
 }
 
-export default function PackageDetailPage({ params }) {
-  const pkg = getPackageBySlug(params.slug);
+export default async function PackageDetailPage({ params }) {
+  const pkg = await getPackageBySlug(params.slug);
   if (!pkg || !pkg.published) notFound();
-  recordPageView(`/packages/${pkg.slug}`);
+  await recordPageView(`/packages/${pkg.slug}`);
 
   return (
     <div className="wrap" style={{ paddingTop: 26, paddingBottom: 70 }}>
@@ -44,7 +44,7 @@ export default function PackageDetailPage({ params }) {
           </div>
         </div>
 
-        <div style={{ width: 340, flexShrink: 0 }}>
+        <div style={{ width: "100%", maxWidth: 340, flexShrink: 0 }}>
           <div className="card" style={{ padding: 22 }}>
             <div className="muted" style={{ fontSize: 13, marginBottom: 16 }}>
               [Pricing configured in the admin platform, Section 20 of the discovery report]

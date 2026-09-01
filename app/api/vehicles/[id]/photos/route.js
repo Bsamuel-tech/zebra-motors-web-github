@@ -25,7 +25,7 @@ export async function POST(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const vehicle = getVehicleByDbId(params.id);
+  const vehicle = await getVehicleByDbId(params.id);
   if (!vehicle) return NextResponse.json({ error: "Vehicle not found." }, { status: 404 });
 
   const form = await request.formData().catch(() => null);
@@ -51,9 +51,9 @@ export async function POST(request, { params }) {
   await fs.writeFile(path.join(dir, filename), bytes);
 
   const url = `/uploads/vehicles/${params.id}/${filename}`;
-  const photo = addPhoto({ vehicleId: params.id, url, altText, isPrimary });
+  const photo = await addPhoto({ vehicleId: params.id, url, altText, isPrimary });
 
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPLOAD_PHOTO",
     entityType: "Vehicle",

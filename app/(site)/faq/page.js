@@ -4,8 +4,8 @@ import FaqAccordion from "@/components/FaqAccordion";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "FAQ, Zebra Motors" };
 
-export default function FaqPage() {
-  const faqs = getFaqs({ publishedOnly: true });
+export default async function FaqPage() {
+  const faqs = await getFaqs({ publishedOnly: true });
 
   return (
     <div className="wrap" style={{ paddingTop: 40, paddingBottom: 70, maxWidth: 760 }}>

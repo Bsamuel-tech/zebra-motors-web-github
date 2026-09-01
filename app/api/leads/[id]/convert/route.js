@@ -11,14 +11,14 @@ export async function POST(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const existing = getLeadById(params.id);
+  const existing = await getLeadById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
   if (existing.status === "CONVERTED") {
     return NextResponse.json({ error: "This lead is already converted." }, { status: 400 });
   }
 
-  const result = convertLeadToCustomer(params.id);
-  logAction({
+  const result = await convertLeadToCustomer(params.id);
+  await logAction({
     userId: session.userId,
     action: "CONVERT",
     entityType: "Lead",

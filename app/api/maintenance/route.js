@@ -18,7 +18,7 @@ export async function POST(request) {
   }
   const type = VALID_TYPES.includes(body.type) ? body.type : "service";
 
-  const record = createMaintenanceRecord({
+  const record = await createMaintenanceRecord({
     vehicleId: body.vehicleId,
     type,
     description: typeof body.description === "string" ? body.description : "",
@@ -28,7 +28,7 @@ export async function POST(request) {
     notes: typeof body.notes === "string" ? body.notes : "",
   });
 
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "CREATE",
     entityType: "MaintenanceRecord",

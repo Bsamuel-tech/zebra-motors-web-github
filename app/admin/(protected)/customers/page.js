@@ -3,8 +3,8 @@ import { getCustomers } from "@/lib/db/customers";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminCustomersPage() {
-  const customers = getCustomers();
+export default async function AdminCustomersPage() {
+  const customers = await getCustomers();
 
   return (
     <div style={{ padding: "32px 36px" }}>

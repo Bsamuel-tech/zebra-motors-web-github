@@ -4,8 +4,8 @@ import PackageForm from "@/components/admin/PackageForm";
 
 export const dynamic = "force-dynamic";
 
-export default function EditPackagePage({ params }) {
-  const pkg = getPackageById(params.id);
+export default async function EditPackagePage({ params }) {
+  const pkg = await getPackageById(params.id);
   if (!pkg) notFound();
 
   return (

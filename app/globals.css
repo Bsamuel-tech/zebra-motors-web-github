@@ -188,6 +188,10 @@ button {
 .card {
   background: #fff;
   border: 1px solid var(--line);
+  /* Wide content (mainly the admin data tables) scrolls inside the card
+     itself rather than forcing the whole page to scroll horizontally on a
+     narrow screen. A no-op for every card that isn't wide enough to overflow. */
+  overflow-x: auto;
 }
 .badge {
   display: inline-flex;
@@ -278,6 +282,51 @@ button {
   border-color: var(--zebra-yellow-dark);
 }
 
+/* admin shell ------------------------------------------------------------ */
+/* Sidebar is a fixed-width column on desktop/tablet, the size an admin
+   back office is mainly used at. Below 900px it collapses to a horizontal
+   bar with a wrapping, scrollable nav row instead of a full-height rail,
+   so the page never forces horizontal scroll on a phone, this is a fix for
+   real overflow, not a mobile-first redesign of the admin experience. */
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--paper-alt);
+}
+.admin-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 0;
+}
+.admin-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+@media (max-width: 900px) {
+  .admin-shell {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    min-height: 0;
+    flex-direction: column;
+    padding: 14px 0;
+  }
+  .admin-sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: none;
+    gap: 4px;
+    padding: 0 12px;
+  }
+}
+
 /* footer -------------------------------------------------------------- */
 .site-footer {
   background: var(--ink);
@@ -294,6 +343,24 @@ button {
   text-transform: uppercase;
   color: #8c8873;
   margin-bottom: 14px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+}
+@media (max-width: 480px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 }
 
 /* grids ---------------------------------------------------------------- */

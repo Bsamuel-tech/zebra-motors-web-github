@@ -62,9 +62,16 @@ async function main() {
   // lib/db/seedData.js is an ES module (consistent with the rest of lib/db,
   // which Next.js's own bundler transpiles); this plain CommonJS script
   // loads it with a dynamic import() instead, the standard way to bridge
-  // the two module systems in Node.
+  // the two module systems in Node. seedDatabase() now expects the same
+  // async prepare().all()/.get()/.run() adapter shape lib/db/client.js
+  // uses (see lib/db/adapter.js), not a raw node:sqlite DatabaseSync, so
+  // this script's own db handle is wrapped the same way before being
+  // passed in. The plain synchronous db.prepare(...).get() calls above and
+  // below (the before/after counts) are unaffected, they talk to
+  // node:sqlite directly and were never going through seedDatabase().
   const { seedDatabase } = await import("../lib/db/seedData.js");
-  seedDatabase(db, process.env);
+  const { SqliteAdapter } = await import("../lib/db/adapter.js");
+  await seedDatabase(new SqliteAdapter(db), process.env);
 
   const after = {
     settings: db.prepare("SELECT COUNT(*) as c FROM business_settings").get().c,

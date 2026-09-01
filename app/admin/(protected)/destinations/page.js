@@ -15,9 +15,9 @@ const CATEGORY_BADGE = {
   CUSTOM: "badge-muted",
 };
 
-export default function AdminDestinationsPage() {
-  const destinations = getDestinations({ publishedOnly: false });
-  const customRequests = getCustomDestinationRequests();
+export default async function AdminDestinationsPage() {
+  const destinations = await getDestinations({ publishedOnly: false });
+  const customRequests = await getCustomDestinationRequests();
 
   return (
     <div style={{ padding: "32px 36px" }}>

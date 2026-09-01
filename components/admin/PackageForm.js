@@ -67,7 +67,7 @@ export default function PackageForm({ pkg }) {
 
   return (
     <form onSubmit={onSubmit} style={{ maxWidth: 640 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <div className="field">
           <label>Name</label>
           <input type="text" value={form.name} required onChange={(e) => set("name", e.target.value)} />

@@ -11,8 +11,8 @@ function Bar({ value, max }) {
   );
 }
 
-export default function AdminAnalyticsPage() {
-  const { totalViews, topPages, topVehicles, byDay, days } = getAnalyticsSummary({ days: 30 });
+export default async function AdminAnalyticsPage() {
+  const { totalViews, topPages, topVehicles, byDay, days } = await getAnalyticsSummary({ days: 30 });
   const maxPageViews = Math.max(1, ...topPages.map((p) => p.views));
   const maxVehicleViews = Math.max(1, ...topVehicles.map((v) => v.views));
   const maxDayViews = Math.max(1, ...byDay.map((d) => d.views));
@@ -40,7 +40,7 @@ export default function AdminAnalyticsPage() {
           site.
         </p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
+        <div className="grid-2" style={{ gap: 24, marginBottom: 24 }}>
           <div className="card" style={{ padding: 20 }}>
             <h2 style={{ fontSize: 15, marginBottom: 14 }}>Most-viewed pages</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

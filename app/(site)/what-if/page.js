@@ -12,8 +12,8 @@ export const metadata = {
     "Describe a trip scenario in your own words and see which real Zebra Motors vehicle fits, with transparent, rule-based reasoning, not a chatbot.",
 };
 
-export default function WhatIfPage({ searchParams }) {
-  recordPageView("/what-if");
+export default async function WhatIfPage({ searchParams }) {
+  await recordPageView("/what-if");
   const initialText = typeof searchParams?.text === "string" ? searchParams.text : "";
   return <WhatIfExplorer initialText={initialText} />;
 }

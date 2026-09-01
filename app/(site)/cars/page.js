@@ -7,8 +7,8 @@ import { recordPageView } from "@/lib/db/analytics";
 // generated, since fleet status and pricing are now admin-editable.
 export const dynamic = "force-dynamic";
 
-export default function FleetPage() {
-  recordPageView("/cars");
-  const vehicles = getVehicles();
+export default async function FleetPage() {
+  await recordPageView("/cars");
+  const vehicles = await getVehicles();
   return <CarsExplorer vehicles={vehicles} />;
 }

@@ -29,7 +29,7 @@ export async function POST(request) {
   // recommendation onto it, that would look like an answer to a question
   // this feature cannot actually answer. Point to the real source instead.
   if (parsed.isPolicyQuestion) {
-    const sessionId = recordWhatIfSession({ rawInput: text, scenario, recommendedVehicleId: null });
+    const sessionId = await recordWhatIfSession({ rawInput: text, scenario, recommendedVehicleId: null });
     return NextResponse.json({
       isPolicyQuestion: true,
       scenario,
@@ -47,7 +47,7 @@ export async function POST(request) {
     });
   }
 
-  const vehicles = getVehicles();
+  const vehicles = await getVehicles();
   const result = scoreVehicles(vehicles, scenario);
 
   const days = scenario.days || 1;
@@ -73,7 +73,7 @@ export async function POST(request) {
   if (bestMatch && scenario.pickupDate && scenario.returnDate) {
     // vehicle_availability/bookings reference the vehicle's internal DB id
     // (vehicle.dbId), not its public slug (vehicle.id), see lib/db/vehicles.js.
-    availability = checkAvailability(bestMatch.vehicle.dbId, scenario.pickupDate, scenario.returnDate);
+    availability = await checkAvailability(bestMatch.vehicle.dbId, scenario.pickupDate, scenario.returnDate);
   }
 
   let comparisonVehicle = null;
@@ -96,7 +96,7 @@ export async function POST(request) {
     comparisonVehicle,
   };
 
-  const sessionId = recordWhatIfSession({
+  const sessionId = await recordWhatIfSession({
     rawInput: text,
     scenario,
     recommendedVehicleId: bestMatch?.vehicle?.dbId || null,

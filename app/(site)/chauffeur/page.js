@@ -49,7 +49,7 @@ export default function ChauffeurPage() {
           <FaqItem q="Can a driver be booked for a multi-day trip, not just transfers?" a="Contact Zebra Motors to confirm availability for multi-day or corporate chauffeur bookings." last />
         </div>
 
-        <div style={{ width: 360, flexShrink: 0 }}>
+        <div style={{ width: "100%", maxWidth: 360, flexShrink: 0 }}>
           <div className="card" style={{ padding: 22, marginBottom: 18 }}>
             <h3 style={{ fontSize: 17, marginBottom: 14 }}>Chauffeur rates</h3>
             <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, marginBottom: 16 }}>

@@ -38,7 +38,7 @@ function localBusinessJsonLd(settings) {
 }
 
 export default async function SiteLayout({ children }) {
-  const settings = getSettings();
+  const settings = await getSettings();
   return (
     <>
       <script

@@ -5,8 +5,8 @@ import DestinationPhotoManager from "@/components/admin/DestinationPhotoManager"
 
 export const dynamic = "force-dynamic";
 
-export default function EditDestinationPage({ params }) {
-  const destination = getDestinationByDbId(params.id);
+export default async function EditDestinationPage({ params }) {
+  const destination = await getDestinationByDbId(params.id);
   if (!destination) notFound();
 
   return (

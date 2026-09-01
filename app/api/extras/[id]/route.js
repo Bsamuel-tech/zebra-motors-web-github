@@ -10,7 +10,7 @@ export async function PATCH(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const existing = getExtraById(params.id);
+  const existing = await getExtraById(params.id);
   if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
   const patch = await request.json().catch(() => ({}));
@@ -21,7 +21,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: "priceRWF must be a number or null." }, { status: 400 });
   }
 
-  const extra = updateExtra(params.id, {
+  const extra = await updateExtra(params.id, {
     name: typeof patch.name === "string" ? patch.name : undefined,
     description: typeof patch.description === "string" ? patch.description : undefined,
     pricingType: patch.pricingType,
@@ -29,7 +29,7 @@ export async function PATCH(request, { params }) {
     active: typeof patch.active === "boolean" ? patch.active : undefined,
   });
 
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "RentalExtra",

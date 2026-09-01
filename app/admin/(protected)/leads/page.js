@@ -4,9 +4,9 @@ import LeadsTable from "@/components/admin/LeadsTable";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLeadsPage() {
-  const leads = getLeads();
-  const summary = getLeadsSummary();
+export default async function AdminLeadsPage() {
+  const leads = await getLeads();
+  const summary = await getLeadsSummary();
 
   return (
     <div style={{ padding: "32px 36px" }}>

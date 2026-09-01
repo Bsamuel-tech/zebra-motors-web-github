@@ -10,12 +10,15 @@ export const dynamic = "force-dynamic";
 // compared honestly. Nothing here is estimated, a booking missing an
 // odometer reading just shows "not recorded yet" rather than a guessed
 // distance (Rule 2).
-export default function AdminTripsPage() {
-  const bookings = getBookings().filter((b) => !b.isDemo);
-  const rows = bookings.map((b) => {
-    const vehicle = getVehicleByDbId(b.vehicleId);
-    return { booking: b, vehicle, usage: getMileageUsage(b, vehicle) };
-  });
+export default async function AdminTripsPage() {
+  const allBookings = await getBookings();
+  const bookings = allBookings.filter((b) => !b.isDemo);
+  const rows = await Promise.all(
+    bookings.map(async (b) => {
+      const vehicle = await getVehicleByDbId(b.vehicleId);
+      return { booking: b, vehicle, usage: getMileageUsage(b, vehicle) };
+    })
+  );
 
   return (
     <div style={{ padding: "32px 36px" }}>

@@ -6,6 +6,6 @@ import { markWhatIfContinued } from "@/lib/db/whatIfSessions";
 // one. Fire-and-forget from the client, never blocks the actual navigation.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  if (body.sessionId) markWhatIfContinued(body.sessionId);
+  if (body.sessionId) await markWhatIfContinued(body.sessionId);
   return NextResponse.json({ ok: true });
 }

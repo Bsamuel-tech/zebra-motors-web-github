@@ -66,7 +66,7 @@ export default function AdminWhatIfSimulator({ baseline }) {
         <p className="muted" style={{ fontSize: 12, marginBottom: 14 }}>
           Read directly from the current fleet and booking tables, not editable here.
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        <div className="grid-3" style={{ gap: 14 }}>
           <div>
             <div className="muted" style={{ fontSize: 11 }}>Fleet size</div>
             <div style={{ fontSize: 20 }}>{baseline.fleetCount}</div>
@@ -84,7 +84,7 @@ export default function AdminWhatIfSimulator({ baseline }) {
 
       <div className="card" style={{ padding: 20, marginBottom: 20, maxWidth: 680 }}>
         <h2 style={{ fontSize: 15, marginBottom: 14 }}>Scenario inputs (your assumptions)</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+        <div className="grid-2" style={{ gap: 18 }}>
           <div className="field">
             <label>Price adjustment (%)</label>
             <input
@@ -130,7 +130,7 @@ export default function AdminWhatIfSimulator({ baseline }) {
 
       <div className="card" style={{ padding: 20, maxWidth: 680 }}>
         <h2 style={{ fontSize: 15, marginBottom: 14 }}>Scenario result</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+        <div className="grid-2" style={{ gap: 14, marginBottom: 18 }}>
           <div>
             <div className="muted" style={{ fontSize: 11 }}>Scenario avg daily rate</div>
             <div style={{ fontSize: 18 }}>RWF {result.scenarioMetrics.estimates.scenarioAvgDailyRateRWF.toLocaleString("en-US")}</div>

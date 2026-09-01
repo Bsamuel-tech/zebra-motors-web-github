@@ -69,7 +69,7 @@ export default function BookingForm({ vehicles }) {
         </select>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <TextField label="Customer name" value={form.customerName} onChange={(v) => set("customerName", v)} required />
         <TextField label="Customer email" type="email" value={form.customerEmail} onChange={(v) => set("customerEmail", v)} required />
         <TextField label="Customer phone" value={form.customerPhone} onChange={(v) => set("customerPhone", v)} />

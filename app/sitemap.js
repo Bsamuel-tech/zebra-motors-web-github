@@ -17,10 +17,10 @@ export const dynamic = "force-dynamic";
 // a vehicle that is not actually bookable or an article that is not
 // actually published. /admin, /account, /api, and /login are deliberately
 // excluded, see app/robots.js.
-export default function sitemap() {
-  const vehicles = getVehicles();
-  const packages = getPackages({ publishedOnly: true });
-  const articles = getArticles({ publishedOnly: true });
+export default async function sitemap() {
+  const vehicles = await getVehicles();
+  const packages = await getPackages({ publishedOnly: true });
+  const articles = await getArticles({ publishedOnly: true });
   const now = new Date();
 
   const staticRoutes = [

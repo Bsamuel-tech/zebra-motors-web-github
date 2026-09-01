@@ -33,17 +33,7 @@ export default function AdminSidebar({ user }) {
   }
 
   return (
-    <div
-      style={{
-        width: 220,
-        flexShrink: 0,
-        background: "var(--ink)",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        padding: "22px 0",
-      }}
-    >
+    <div className="admin-sidebar">
       <div style={{ padding: "0 22px 24px 22px" }}>
         <div className="serif" style={{ fontSize: 19, color: "#fff" }}>
           ZEBRA MOTORS
@@ -52,7 +42,7 @@ export default function AdminSidebar({ user }) {
           Admin
         </div>
       </div>
-      <nav style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+      <nav className="admin-sidebar-nav">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
           return (

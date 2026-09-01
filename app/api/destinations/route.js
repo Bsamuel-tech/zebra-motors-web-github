@@ -12,7 +12,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const all = session && searchParams.get("all") === "1";
   const q = searchParams.get("q") || "";
-  return NextResponse.json({ destinations: getDestinations({ publishedOnly: !all, query: q }) });
+  return NextResponse.json({ destinations: await getDestinations({ publishedOnly: !all, query: q }) });
 }
 
 export async function POST(request) {
@@ -24,8 +24,8 @@ export async function POST(request) {
   if (!input?.name) {
     return NextResponse.json({ error: "name is required." }, { status: 400 });
   }
-  const destination = createDestination(input);
-  logAction({
+  const destination = await createDestination(input);
+  await logAction({
     userId: session.userId,
     action: "CREATE",
     entityType: "Destination",

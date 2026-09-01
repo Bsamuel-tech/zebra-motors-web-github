@@ -3,8 +3,8 @@ import SettingsForm from "@/components/admin/SettingsForm";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminSettingsPage() {
-  const settings = getSettings();
+export default async function AdminSettingsPage() {
+  const settings = await getSettings();
 
   return (
     <div style={{ padding: "32px 36px" }}>

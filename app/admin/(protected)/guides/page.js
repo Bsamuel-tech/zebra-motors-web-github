@@ -10,8 +10,8 @@ const STATUS_COLORS = {
   archived: "badge-muted",
 };
 
-export default function AdminGuidesPage() {
-  const articles = getArticles();
+export default async function AdminGuidesPage() {
+  const articles = await getArticles();
 
   return (
     <div style={{ padding: "32px 36px" }}>

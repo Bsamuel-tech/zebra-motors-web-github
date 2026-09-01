@@ -10,8 +10,8 @@ import { recordPageView } from "@/lib/db/analytics";
 // change without a rebuild, per Rule 84.
 export const dynamic = "force-dynamic";
 
-export function generateMetadata({ params }) {
-  const vehicle = getVehicleBySlug(params.id);
+export async function generateMetadata({ params }) {
+  const vehicle = await getVehicleBySlug(params.id);
   if (!vehicle) return {};
   return {
     title: `${vehicle.name}, Zebra Motors`,
@@ -19,10 +19,10 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function VehicleDetailPage({ params }) {
-  const vehicle = getVehicleBySlug(params.id);
+export default async function VehicleDetailPage({ params }) {
+  const vehicle = await getVehicleBySlug(params.id);
   if (!vehicle) notFound();
-  recordPageView(`/cars/${vehicle.id}`, vehicle.dbId);
+  await recordPageView(`/cars/${vehicle.id}`, vehicle.dbId);
 
   return (
     <div className="wrap" style={{ paddingTop: 26, paddingBottom: 70 }}>
@@ -116,7 +116,7 @@ export default function VehicleDetailPage({ params }) {
         </div>
 
         {/* booking sidebar */}
-        <div style={{ width: 340, flexShrink: 0 }}>
+        <div style={{ width: "100%", maxWidth: 340, flexShrink: 0 }}>
           <div className="card" style={{ padding: 22, position: "sticky", top: 20 }}>
             <div style={{ fontSize: 22, marginBottom: 4 }}>{priceRangeLabel(vehicle)}</div>
             <div className="muted" style={{ fontSize: 12.5, marginBottom: 18 }}>

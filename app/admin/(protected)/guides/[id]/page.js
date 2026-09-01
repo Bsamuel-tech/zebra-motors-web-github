@@ -4,8 +4,8 @@ import GuideForm from "@/components/admin/GuideForm";
 
 export const dynamic = "force-dynamic";
 
-export default function EditGuidePage({ params }) {
-  const article = getArticleById(params.id);
+export default async function EditGuidePage({ params }) {
+  const article = await getArticleById(params.id);
   if (!article) notFound();
 
   return (

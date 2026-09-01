@@ -54,7 +54,7 @@ export default function AirportBookingForm({ settings }) {
           <FaqItem q="What documents do I need at pickup?" a="Passport and a valid driving licence. Confirm with Zebra Motors whether an International Driving Permit is also needed for your nationality." last />
         </div>
 
-        <div style={{ width: 360, flexShrink: 0 }}>
+        <div style={{ width: "100%", maxWidth: 360, flexShrink: 0 }}>
           <div className="card" style={{ padding: 22, marginBottom: 18 }}>
             <h3 style={{ fontSize: 17, marginBottom: 4 }}>Add your flight details</h3>
             <p className="muted" style={{ fontSize: 12.5, marginBottom: 18 }}>

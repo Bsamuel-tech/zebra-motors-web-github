@@ -4,8 +4,8 @@ import FaqForm from "@/components/admin/FaqForm";
 
 export const dynamic = "force-dynamic";
 
-export default function EditFaqPage({ params }) {
-  const faq = getFaqs().find((f) => f.id === params.id);
+export default async function EditFaqPage({ params }) {
+  const faq = (await getFaqs()).find((f) => f.id === params.id);
   if (!faq) notFound();
 
   return (

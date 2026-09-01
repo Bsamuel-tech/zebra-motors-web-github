@@ -5,7 +5,7 @@ import { logAction } from "@/lib/db/auditLog";
 
 export async function GET() {
   const session = await getSession();
-  return NextResponse.json({ faqs: getFaqs({ publishedOnly: !session }) });
+  return NextResponse.json({ faqs: await getFaqs({ publishedOnly: !session }) });
 }
 
 export async function POST(request) {
@@ -17,7 +17,7 @@ export async function POST(request) {
   if (!input?.question || !input?.answer) {
     return NextResponse.json({ error: "question and answer are required." }, { status: 400 });
   }
-  const faq = createFaq(input);
-  logAction({ userId: session.userId, action: "CREATE", entityType: "Faq", entityId: faq.id, detail: faq.q });
+  const faq = await createFaq(input);
+  await logAction({ userId: session.userId, action: "CREATE", entityType: "Faq", entityId: faq.id, detail: faq.q });
   return NextResponse.json({ faq }, { status: 201 });
 }

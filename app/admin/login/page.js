@@ -44,7 +44,7 @@ function LoginForm() {
       <form
         onSubmit={onSubmit}
         className="card"
-        style={{ width: 360, padding: 32, background: "#fff" }}
+        style={{ width: "100%", maxWidth: 360, padding: 32, background: "#fff" }}
       >
         <div className="serif" style={{ fontSize: 22, marginBottom: 4 }}>
           ZEBRA MOTORS

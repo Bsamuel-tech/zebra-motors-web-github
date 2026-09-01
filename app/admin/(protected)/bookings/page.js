@@ -5,8 +5,8 @@ import BookingStatusControl from "@/components/admin/BookingStatusControl";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminBookingsPage() {
-  const bookings = getBookings();
+export default async function AdminBookingsPage() {
+  const bookings = await getBookings();
 
   return (
     <div style={{ padding: "32px 36px" }}>
@@ -18,8 +18,8 @@ export default function AdminBookingsPage() {
       </div>
       <p className="muted" style={{ fontSize: 13.5, marginBottom: 20, maxWidth: 640 }}>
         {bookings.length === 0
-          ? "No bookings recorded yet. The public site's own booking flow is still a labelled demo and does not save here, that still needs a payment provider plus the outstanding business policy decisions (deposit, cancellation, insurance) before it can go live. Use \"Add booking\" to record a real booking Zebra staff took by phone or in person."
-          : `${bookings.length} bookings recorded. Real mileage tracking for these lives on the Trips page.`}
+          ? "No bookings recorded yet. Bookings appear here both when a customer submits a real request through the public /book flow, and when Zebra staff record one taken by phone or in person with \"Add booking\". No online payment is taken either way, that is still a separate, unbuilt piece of work."
+          : `${bookings.length} bookings recorded. "Online request" bookings came from a real customer through the public site and are waiting on your review, "Staff entered" ones you or a colleague recorded directly. Real mileage tracking for these lives on the Trips page.`}
       </p>
 
       {bookings.length > 0 && (
@@ -31,6 +31,7 @@ export default function AdminBookingsPage() {
                 <th style={{ padding: "12px 16px" }}>Vehicle</th>
                 <th style={{ padding: "12px 16px" }}>Customer</th>
                 <th style={{ padding: "12px 16px" }}>Dates</th>
+                <th style={{ padding: "12px 16px" }}>Source</th>
                 <th style={{ padding: "12px 16px" }}>Total</th>
                 <th style={{ padding: "12px 16px" }}>Status</th>
               </tr>
@@ -50,6 +51,11 @@ export default function AdminBookingsPage() {
                   <td style={{ padding: "12px 16px" }}>{b.customerName || "-"}</td>
                   <td style={{ padding: "12px 16px" }}>
                     {b.pickupDate} to {b.returnDate}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    <span className={`badge ${b.source === "online_request" ? "badge-forest" : "badge-muted"}`}>
+                      {b.source === "online_request" ? "Online request" : "Staff entered"}
+                    </span>
                   </td>
                   <td style={{ padding: "12px 16px" }}>RWF {formatRWF(b.totalRWF)}</td>
                   <td style={{ padding: "12px 16px" }}>

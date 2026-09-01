@@ -299,7 +299,7 @@ export default function TripPlanner({ vehicles, destinations }) {
 
       <div className="wrap" style={{ display: "flex", gap: 32, padding: "36px 32px 70px 32px", flexWrap: "wrap" }}>
         {/* input */}
-        <div style={{ width: 380, flexShrink: 0 }} className="card">
+        <div style={{ width: "100%", maxWidth: 380, flexShrink: 0 }} className="card">
           <div style={{ padding: 22 }}>
             <FieldLabel>Search destinations</FieldLabel>
             <input
@@ -563,7 +563,7 @@ function StopCard({ stop, index, isFirst, isLast, onRemove, onMoveUp, onMoveDown
             <p className="muted" style={{ fontSize: 12.5, marginBottom: 10 }}>{stop.description}</p>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 8 }}>
+          <div className="grid-3" style={{ gap: 10, marginBottom: 8 }}>
             <div className="field">
               <label style={{ fontSize: 11 }}>Arrival</label>
               <input type="date" value={stop.arrival} onChange={(e) => onChange({ arrival: e.target.value })} style={{ fontSize: 12.5, padding: "7px 9px" }} />

@@ -3,8 +3,8 @@ import { getPackages } from "@/lib/db/packages";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminPackagesPage() {
-  const packages = getPackages();
+export default async function AdminPackagesPage() {
+  const packages = await getPackages();
 
   return (
     <div style={{ padding: "32px 36px" }}>

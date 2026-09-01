@@ -12,9 +12,9 @@ export async function PATCH(request, { params }) {
   if (typeof patch?.published !== "boolean") {
     return NextResponse.json({ error: "published (boolean) is required." }, { status: 400 });
   }
-  const review = setReviewPublished(params.id, patch.published);
+  const review = await setReviewPublished(params.id, patch.published);
   if (!review) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  logAction({
+  await logAction({
     userId: session.userId,
     action: patch.published ? "PUBLISH" : "UNPUBLISH",
     entityType: "Review",

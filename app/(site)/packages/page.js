@@ -6,9 +6,9 @@ import { recordPageView } from "@/lib/db/analytics";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Travel Packages, Zebra Motors" };
 
-export default function PackagesPage() {
-  recordPageView("/packages");
-  const packages = getPackages({ publishedOnly: true });
+export default async function PackagesPage() {
+  await recordPageView("/packages");
+  const packages = await getPackages({ publishedOnly: true });
 
   return (
     <div className="wrap" style={{ paddingBottom: 70 }}>

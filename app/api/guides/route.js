@@ -13,7 +13,7 @@ function slugify(text) {
 
 export async function GET() {
   const session = await getSession();
-  return NextResponse.json({ articles: getArticles({ publishedOnly: !session }) });
+  return NextResponse.json({ articles: await getArticles({ publishedOnly: !session }) });
 }
 
 export async function POST(request) {
@@ -26,7 +26,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "title and excerpt are required." }, { status: 400 });
   }
   const slug = input.slug || slugify(input.title);
-  const article = createArticle({ ...input, slug });
-  logAction({ userId: session.userId, action: "CREATE", entityType: "GuideArticle", entityId: article.id, detail: article.title });
+  const article = await createArticle({ ...input, slug });
+  await logAction({ userId: session.userId, action: "CREATE", entityType: "GuideArticle", entityId: article.id, detail: article.title });
   return NextResponse.json({ article }, { status: 201 });
 }

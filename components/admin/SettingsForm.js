@@ -45,7 +45,7 @@ export default function SettingsForm({ settings }) {
 
   return (
     <form onSubmit={onSubmit} style={{ maxWidth: 560 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 20 }}>
         {FIELDS.map((f) => (
           <div className="field" key={f.key}>
             <label>{f.label}</label>

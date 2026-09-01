@@ -3,8 +3,8 @@ import ReviewsTable from "@/components/admin/ReviewsTable";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminReviewsPage() {
-  const reviews = getReviews();
+export default async function AdminReviewsPage() {
+  const reviews = await getReviews();
 
   return (
     <div style={{ padding: "32px 36px" }}>

@@ -12,7 +12,7 @@ export async function POST(request) {
   if (!name) {
     return NextResponse.json({ error: "name is required." }, { status: 400 });
   }
-  const request_ = logCustomDestinationRequest({
+  const request_ = await logCustomDestinationRequest({
     name,
     notes: typeof body?.notes === "string" ? body.notes : "",
     source: typeof body?.source === "string" ? body.source : "trip_planner",

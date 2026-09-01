@@ -110,13 +110,23 @@ CREATE TABLE IF NOT EXISTS vehicle_availability (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- password_hash is nullable: a customer row can exist purely as a booking
+-- contact (created by staff via /admin/bookings/new, or once the public
+-- Booking Request flow writes real rows) with no login capability at all,
+-- exactly as before. It only gets set when that same email signs up for a
+-- real account (Section 7/8 of the presentation-readiness pass, customer
+-- authentication Option A). Signing up with an email that already has a
+-- customer row (e.g. a booking Zebra staff entered by phone) claims that
+-- existing row rather than creating a duplicate, see
+-- lib/db/customers.js createCustomerAccount().
 CREATE TABLE IF NOT EXISTS customers (
-  id         TEXT PRIMARY KEY,
-  name       TEXT NOT NULL,
-  email      TEXT UNIQUE NOT NULL,
-  phone      TEXT,
-  country    TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT NULL,
+  email         TEXT UNIQUE NOT NULL,
+  phone         TEXT,
+  country       TEXT,
+  password_hash TEXT,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -128,6 +138,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   return_date    TEXT NOT NULL,
   service_type   TEXT NOT NULL DEFAULT 'self-drive',
   status         TEXT NOT NULL DEFAULT 'PENDING',
+  -- 'online_request' when a real customer submitted this through the
+  -- public /book flow (Section 10, Booking Request MVP), 'staff_entered'
+  -- when Zebra staff recorded it directly via /admin/bookings/new. Lets
+  -- the admin bookings list distinguish "needs your review" from "you
+  -- already confirmed this by phone", see lib/db/bookings.js createBooking().
+  source         TEXT NOT NULL DEFAULT 'staff_entered',
   total_rwf      INTEGER NOT NULL,
   deposit_rwf    INTEGER,
   is_demo        INTEGER NOT NULL DEFAULT 1,

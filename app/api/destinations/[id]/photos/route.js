@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const destination = getDestinationByDbId(params.id);
+  const destination = await getDestinationByDbId(params.id);
   if (!destination) return NextResponse.json({ error: "Destination not found." }, { status: 404 });
 
   const form = await request.formData().catch(() => null);
@@ -47,9 +47,9 @@ export async function POST(request, { params }) {
   await fs.writeFile(path.join(dir, filename), bytes);
 
   const url = `/uploads/destinations/${params.id}/${filename}`;
-  const photo = addDestinationPhoto({ destinationId: params.id, url, altText, isPrimary });
+  const photo = await addDestinationPhoto({ destinationId: params.id, url, altText, isPrimary });
 
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPLOAD_PHOTO",
     entityType: "Destination",

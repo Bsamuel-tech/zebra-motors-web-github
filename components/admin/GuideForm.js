@@ -85,7 +85,7 @@ export default function GuideForm({ article }) {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <div className="field">
           <label>Category</label>
           <input type="text" value={form.category} onChange={(e) => set("category", e.target.value)} />

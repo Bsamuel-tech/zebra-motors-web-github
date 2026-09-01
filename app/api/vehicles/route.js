@@ -15,7 +15,7 @@ export async function GET(request) {
   const session = await getSession();
   const { searchParams } = new URL(request.url);
   const includeAll = session && searchParams.get("all") === "1";
-  return NextResponse.json({ vehicles: getVehicles({ includeAll }) });
+  return NextResponse.json({ vehicles: await getVehicles({ includeAll }) });
 }
 
 export async function POST(request) {
@@ -31,12 +31,12 @@ export async function POST(request) {
     );
   }
   const slug = input.slug || slugify(`${input.make}-${input.model}-${input.year || ""}`);
-  const vehicle = createVehicle({
+  const vehicle = await createVehicle({
     ...input,
     slug,
     name: input.name || `${input.make} ${input.model}`,
   });
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "CREATE",
     entityType: "Vehicle",

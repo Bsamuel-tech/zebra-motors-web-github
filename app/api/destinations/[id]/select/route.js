@@ -5,6 +5,6 @@ import { recordDestinationSelection } from "@/lib/db/destinations";
 // published destination to their trip planner route, a genuine popularity
 // signal (Rule 2: only ever counts a real event, never estimated).
 export async function POST(request, { params }) {
-  recordDestinationSelection(params.id);
+  await recordDestinationSelection(params.id);
   return NextResponse.json({ ok: true });
 }

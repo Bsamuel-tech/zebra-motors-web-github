@@ -8,7 +8,7 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  return NextResponse.json({ bookings: getBookings() });
+  return NextResponse.json({ bookings: await getBookings() });
 }
 
 // Admin-entered real booking (e.g. taken by phone or in person). The
@@ -28,11 +28,11 @@ export async function POST(request) {
   }
   let booking;
   try {
-    booking = createBooking(input);
+    booking = await createBooking(input);
   } catch (err) {
     return NextResponse.json({ error: err.message || "Could not create booking." }, { status: 400 });
   }
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "CREATE",
     entityType: "Booking",

@@ -110,7 +110,7 @@ export default function DestinationForm({ destination }) {
 
   return (
     <form onSubmit={onSubmit} style={{ maxWidth: 640 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 16 }}>
         <TextField label="Name" value={form.name} onChange={(v) => set("name", v)} required />
         <TextField label="Region" value={form.region} onChange={(v) => set("region", v)} />
         <SelectField label="Category" value={form.category} onChange={(v) => set("category", v)} options={CATEGORIES} />

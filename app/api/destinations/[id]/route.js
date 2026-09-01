@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/requireAdmin";
 import { logAction } from "@/lib/db/auditLog";
 
 export async function GET(request, { params }) {
-  const destination = getDestinationByDbId(params.id);
+  const destination = await getDestinationByDbId(params.id);
   if (!destination) return NextResponse.json({ error: "Not found." }, { status: 404 });
   return NextResponse.json({ destination });
 }
@@ -16,9 +16,9 @@ export async function PATCH(request, { params }) {
   }
   const patch = await request.json().catch(() => null);
   if (!patch) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  const destination = updateDestination(params.id, patch);
+  const destination = await updateDestination(params.id, patch);
   if (!destination) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  logAction({
+  await logAction({
     userId: session.userId,
     action: "UPDATE",
     entityType: "Destination",
@@ -35,8 +35,8 @@ export async function DELETE(request, { params }) {
   if (!session) {
     return NextResponse.json({ error: "Admin authentication required." }, { status: 401 });
   }
-  const destination = unpublishDestination(params.id);
+  const destination = await unpublishDestination(params.id);
   if (!destination) return NextResponse.json({ error: "Not found." }, { status: 404 });
-  logAction({ userId: session.userId, action: "UNPUBLISH", entityType: "Destination", entityId: params.id });
+  await logAction({ userId: session.userId, action: "UNPUBLISH", entityType: "Destination", entityId: params.id });
   return NextResponse.json({ destination });
 }

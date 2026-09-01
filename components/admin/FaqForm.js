@@ -67,7 +67,7 @@ export default function FaqForm({ faq }) {
           style={{ border: "1px solid var(--line)", padding: 12, fontFamily: "inherit", fontSize: 14, width: "100%" }}
         />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+      <div className="grid-2" style={{ gap: 16, marginBottom: 20 }}>
         <div className="field">
           <label>Category</label>
           <input type="text" value={form.category} onChange={(e) => set("category", e.target.value)} />
