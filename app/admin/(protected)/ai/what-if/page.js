@@ -4,6 +4,7 @@ import { getWhatIfAnalyticsSummary } from "@/lib/db/whatIfSessions";
 import { midRateRWF } from "@/data/vehicles";
 import { hasSufficientHistory } from "@/lib/whatIf/businessSimulation";
 import AdminWhatIfSimulator from "@/components/admin/AdminWhatIfSimulator";
+import { getVehicleUtilization, getPopularDestinations, getAverageTripDistance } from "@/lib/db/businessAnalytics";
 
 // Reads real, current fleet and booking data on every request, this is a
 // simulation tool for admins, it must never work from a stale snapshot.
@@ -30,6 +31,11 @@ export default async function AdminWhatIfPage() {
   };
 
   const whatIfUsage = await getWhatIfAnalyticsSummary();
+  const [vehicleUtilization, popularDestinations, averageTripDistance] = await Promise.all([
+    getVehicleUtilization(),
+    getPopularDestinations({ limit: 5 }),
+    getAverageTripDistance(),
+  ]);
 
   return (
     <div style={{ padding: "32px 36px" }}>
@@ -68,6 +74,49 @@ export default async function AdminWhatIfPage() {
             )}
           </>
         )}
+      </div>
+
+      <div className="card" style={{ padding: 20, marginTop: 20, maxWidth: 680 }}>
+        <h2 style={{ fontSize: 15, marginBottom: 4 }}>Business analyst (groundwork)</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 14 }}>
+          Real aggregate numbers, from real bookings and real Trip Planner selections, the same
+          queries a future admin-facing AI assistant would call as tools, never a fabricated
+          statistic.
+        </p>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Vehicle utilization</div>
+          {vehicleUtilization.every((v) => v.bookingCount === 0) ? (
+            <p className="muted" style={{ fontSize: 12.5 }}>No real bookings yet, this will fill in as bookings come in.</p>
+          ) : (
+            vehicleUtilization.map((v) => (
+              <div key={v.slug} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <span>{v.name}</span>
+                <span className="muted">{v.bookingCount} booking{v.bookingCount === 1 ? "" : "s"}, {v.bookedDays} days</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Popular destinations</div>
+          {popularDestinations.every((d) => d.selections === 0) ? (
+            <p className="muted" style={{ fontSize: 12.5 }}>No Trip Planner selections recorded yet.</p>
+          ) : (
+            popularDestinations.map((d) => (
+              <div key={d.name} style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5 }}>
+                <span>{d.name}</span>
+                <span className="muted">{d.selections} selection{d.selections === 1 ? "" : "s"}</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Average trip distance</div>
+          <p style={{ fontSize: 12.5 }}>
+            {averageTripDistance.sampleSize > 0
+              ? `${averageTripDistance.averageKm} km, averaged over ${averageTripDistance.sampleSize} booking${averageTripDistance.sampleSize === 1 ? "" : "s"} with a real routed distance.`
+              : averageTripDistance.note}
+          </p>
+        </div>
       </div>
     </div>
   );

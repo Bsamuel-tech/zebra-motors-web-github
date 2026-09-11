@@ -222,6 +222,13 @@ button {
   background: var(--zebra-yellow);
   color: var(--on-yellow);
 }
+.badge-danger {
+  /* Used by the AI support inbox (/admin/support) for ESCALATED and
+     WAITING_FOR_ZEBRA conversations, the two statuses that need an admin's
+     attention soonest. */
+  background: #f3ddd6;
+  color: var(--danger);
+}
 .eyebrow {
   font-size: 12px;
   font-weight: 600;

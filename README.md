@@ -1,15 +1,35 @@
-# Zebra Motors, Website and Admin Platform (Phase 3C/E/G/H)
+# Zebra Motors, Website and Admin Platform
+
+## Current status, read this first
+
+Everything below "Phase 3 status" is a snapshot written during Phase 3C and
+was never updated as later phases shipped, it is kept for its historical
+reasoning but should not be trusted for what exists today. Since it was
+written, this codebase has since gained: real customer accounts and login
+(not demo data), a real booking flow that writes to the database and is
+visible to both the customer and admin, a real destinations database with
+admin-managed multi-stop trip planning and live geocoding/routing, and,
+most recently, a full AI architecture: Zebra AI Support (a customer chat
+widget with a real tool-calling gateway, a knowledge base, and human
+escalation to `/admin/support`), fixes to the What If explorer's context
+handling and hardcoded destination list, and an AI-assisted trip parser.
+None of this connects to a live AI provider yet, no API key exists in this
+environment, everything AI-related runs on real, tested, honestly-labelled
+deterministic logic today and is built to switch to a real model the
+moment a key is added (see `lib/ai/provider.js`).
+
+For the authoritative, line-by-line account of what is real, what is a UI
+mock, and what still needs credentials, see `FINAL_FEATURE_AUDIT.md` and
+`AI_ARCHITECTURE_REPORT.md` in this repository, both written from live
+testing, not from reading code. Treat the payment/booking/AI claims in the
+paragraphs below as history, not current fact.
 
 This is a real, working Next.js application implementing the design system
 and core customer journey from the discovery report and design canvas, with
 a real backend: a database, admin authentication, and an admin panel
 covering the fleet, bookings, customers, reviews, FAQ, travel packages, the
 Rwanda Guide, and first-party analytics. Technical SEO (sitemap, robots.txt,
-structured data) and PWA installability are also real and live. Booking,
-payment, and customer accounts still use clearly labelled demo data, that
-part is Phase 3D and needs a payment provider and the outstanding business
-policy questions settled first (see the published Phase 3 report for the
-full plan, and "Phase 3 status" below for exactly what is and is not here).
+structured data) and PWA installability are also real and live.
 
 ## Running it
 

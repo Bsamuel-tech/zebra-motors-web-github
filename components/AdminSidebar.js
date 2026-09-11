@@ -19,6 +19,8 @@ const NAV = [
   { href: "/admin/guides", label: "Rwanda Guide" },
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/ai/what-if", label: "AI What If" },
+  { href: "/admin/knowledge", label: "Zebra Knowledge" },
+  { href: "/admin/support", label: "Support" },
   { href: "/admin/settings", label: "Business settings" },
 ];
 

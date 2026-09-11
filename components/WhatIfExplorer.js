@@ -44,7 +44,7 @@ export default function WhatIfExplorer({ initialText = "" }) {
   const [savedName, setSavedName] = useState("");
   const [saved, setSaved] = useState(false);
 
-  async function analyze(nextOverrides = overrides, nextText = text) {
+  async function analyze(nextOverrides = overrides, nextText = text, previousScenario = null) {
     if (!nextText.trim()) return;
     setLoading(true);
     setError(null);
@@ -52,7 +52,7 @@ export default function WhatIfExplorer({ initialText = "" }) {
       const res = await fetch("/api/what-if/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: nextText, overrides: nextOverrides }),
+        body: JSON.stringify({ text: nextText, overrides: nextOverrides, previousScenario }),
       });
       if (!res.ok) throw new Error("Could not analyze this scenario.");
       const data = await res.json();
@@ -141,9 +141,34 @@ export default function WhatIfExplorer({ initialText = "" }) {
               </button>
             ))}
           </div>
-          <button className="btn-primary" onClick={() => analyze({}, text)} disabled={loading || !text.trim()}>
-            {loading ? "Analyzing..." : "Explore this scenario"}
-          </button>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              className="btn-primary"
+              onClick={() => analyze({}, text, result?.scenario || null)}
+              disabled={loading || !text.trim()}
+            >
+              {loading ? "Analyzing..." : result ? "Continue this scenario" : "Explore this scenario"}
+            </button>
+            {result && (
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => {
+                  setResult(null);
+                  setOverrides({});
+                }}
+                disabled={loading}
+              >
+                Start a new scenario
+              </button>
+            )}
+          </div>
+          {result && (
+            <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
+              Typing a follow-up (like "what if I add Lake Kivu?") builds on the scenario above.
+              Use "Start a new scenario" to describe an unrelated trip instead.
+            </p>
+          )}
           {error && (
             <p style={{ color: "#a33", fontSize: 13, marginTop: 10 }}>{error}</p>
           )}
@@ -177,7 +202,7 @@ export default function WhatIfExplorer({ initialText = "" }) {
 }
 
 function WhatIfResult({ result, onQuickAction, onContinue }) {
-  const { scenario, bestMatch, lowerCost, notRecommended, missingInformation, availability, chauffeur, airport, comparisonVehicle, isPolicyQuestion } = result;
+  const { scenario, bestMatch, lowerCost, notRecommended, missingInformation, availability, chauffeur, airport, comparisonVehicle, isPolicyQuestion, route } = result;
 
   if (isPolicyQuestion) {
     return (
@@ -266,6 +291,35 @@ function WhatIfResult({ result, onQuickAction, onContinue }) {
       {availability && (
         <div className="card" style={{ padding: 18, marginBottom: 16, background: availability.available === false ? "#fdf2f2" : undefined }}>
           <strong style={{ fontSize: 13.5 }}>{availability.reason}</strong>
+        </div>
+      )}
+
+      {route && (
+        <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>
+            Route for {route.stops?.join(" → ") || scenario.destinations.join(" → ")}
+          </div>
+          {route.distanceKm != null ? (
+            <>
+              <p style={{ fontSize: 14.5, marginBottom: 6 }}>
+                Real routed distance: {Math.round(route.distanceKm)} km, about {Math.round(route.durationMinutes / 60)}h {Math.round(route.durationMinutes % 60)}m driving time.
+              </p>
+              {route.mileageImpact && (
+                <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                  {route.mileageImpact.policy === "UNLIMITED"
+                    ? route.mileageImpact.note
+                    : `Projected ${route.mileageImpact.projectedKm} km against a ${route.mileageImpact.allowanceKm} km allowance: ${route.mileageImpact.overageKm > 0 ? `about RWF ${route.mileageImpact.overageChargeRWF.toLocaleString("en-US")} in projected extra mileage charges.` : "within the included allowance."}`}
+                </p>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: 13.5, color: "var(--ink-soft)" }}>{route.note}</p>
+          )}
+          {route.missingCoordinates?.length > 0 && (
+            <p className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
+              No coordinates on file yet for: {route.missingCoordinates.join(", ")}, so this route excludes {route.missingCoordinates.length === 1 ? "it" : "them"}.
+            </p>
+          )}
         </div>
       )}
 

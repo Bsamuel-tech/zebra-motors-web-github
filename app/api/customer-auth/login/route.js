@@ -8,6 +8,17 @@ import {
 } from "@/lib/auth/customerSession";
 
 export async function POST(request) {
+  // See the identical check in app/api/customer-auth/signup/route.js: without
+  // it, a missing JWT_SECRET crashes createCustomerSessionToken with an
+  // opaque, bodyless 500 instead of a real, diagnosable error.
+  if (!process.env.JWT_SECRET) {
+    console.error("Customer login failed: JWT_SECRET is not set in this environment.");
+    return NextResponse.json(
+      { error: "Sign-in is not available right now (server configuration issue). Contact Zebra Motors directly." },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const email = body?.email?.trim().toLowerCase();
   const password = body?.password;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import VehiclePhoto from "./VehiclePhoto";
+import ConvertedPrice from "./ConvertedPrice";
 import { formatRWF } from "@/data/vehicles";
 
 export default function VehicleCard({ vehicle }) {
@@ -19,6 +20,7 @@ export default function VehicleCard({ vehicle }) {
               {" "}
               /day
             </span>
+            <ConvertedPrice rwf={vehicle.dailyRateRWFMax} />
           </div>
           <Link href={`/cars/${vehicle.id}`} style={{ fontSize: 13, fontWeight: 600 }}>
             Details →

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Photo from "./Photo";
+import ConvertedPrice from "./ConvertedPrice";
 import { formatRWF, midRateRWF, priceRangeLabel } from "@/data/vehicles";
 import { whatsappLink, telLink, mailtoLink } from "@/data/settings";
 import { loadTripFromSession, clearTripSession } from "@/lib/tripStorage";
@@ -205,6 +206,7 @@ export default function BookingFlow({ vehicles = [], extras = [], settings = nul
     setSubmitError("");
 
     try {
+      const selectedExtraKeys = extras.filter((e) => selectedExtraIds[e.id]).map((e) => e.key);
       const res = await fetch("/api/booking-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -212,12 +214,18 @@ export default function BookingFlow({ vehicles = [], extras = [], settings = nul
           vehicleDbId: vehicle.dbId,
           pickupDate: pickupAt,
           returnDate: returnAt,
+          pickupLocation,
+          dropoffLocation: sameDropoff ? pickupLocation : dropoffLocation,
           customerName: details.name,
           customerEmail: details.email,
           customerPhone: details.phone,
           customerCountry: details.country,
           serviceType: driveMode === "self" ? "self-drive" : "chauffeur",
-          totalRWF: pricing?.total,
+          extraKeys: selectedExtraKeys,
+          // No totalRWF is sent, the server recomputes the real total from
+          // the vehicle's published rate and the selected extras, the same
+          // pricing.total shown on screen is only ever an estimate for the
+          // customer's own benefit, never the number actually charged.
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -360,9 +368,12 @@ export default function BookingFlow({ vehicles = [], extras = [], settings = nul
                   <Row key={i} label={item.label} value={item.value} tag={item.tag} />
                 ))}
 
-                <div style={{ borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 12, display: "flex", justifyContent: "space-between", fontWeight: 600, fontSize: 16 }}>
+                <div style={{ borderTop: "1px solid var(--line)", marginTop: 10, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "baseline", fontWeight: 600, fontSize: 16 }}>
                   <span>Estimated total</span>
-                  <span>{pricing.total !== null ? `RWF ${formatRWF(pricing.total)}` : "Add dates"}</span>
+                  <span>
+                    {pricing.total !== null ? `RWF ${formatRWF(pricing.total)}` : "Add dates"}
+                    {pricing.total !== null && <ConvertedPrice rwf={pricing.total} style={{ fontWeight: 400 }} />}
+                  </span>
                 </div>
                 <div className="confirm-note" style={{ display: "block", fontSize: 12, marginTop: 10 }}>
                   {pricing.hasQuoteItems

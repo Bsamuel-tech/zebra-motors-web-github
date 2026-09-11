@@ -31,6 +31,7 @@ export default async function AdminBookingsPage() {
                 <th style={{ padding: "12px 16px" }}>Vehicle</th>
                 <th style={{ padding: "12px 16px" }}>Customer</th>
                 <th style={{ padding: "12px 16px" }}>Dates</th>
+                <th style={{ padding: "12px 16px" }}>Pickup / drop-off</th>
                 <th style={{ padding: "12px 16px" }}>Source</th>
                 <th style={{ padding: "12px 16px" }}>Total</th>
                 <th style={{ padding: "12px 16px" }}>Status</th>
@@ -51,6 +52,16 @@ export default async function AdminBookingsPage() {
                   <td style={{ padding: "12px 16px" }}>{b.customerName || "-"}</td>
                   <td style={{ padding: "12px 16px" }}>
                     {b.pickupDate} to {b.returnDate}
+                  </td>
+                  <td style={{ padding: "12px 16px" }}>
+                    {b.pickupLocation || b.dropoffLocation ? (
+                      <>
+                        {b.pickupLocation || "-"}
+                        {b.dropoffLocation && b.dropoffLocation !== b.pickupLocation ? ` to ${b.dropoffLocation}` : ""}
+                      </>
+                    ) : (
+                      <span className="muted">Not provided</span>
+                    )}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     <span className={`badge ${b.source === "online_request" ? "badge-forest" : "badge-muted"}`}>

@@ -5,6 +5,17 @@ import { createSessionToken, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from "@/li
 import { logAction } from "@/lib/db/auditLog";
 
 export async function POST(request) {
+  // See the identical check in app/api/customer-auth/login/route.js: without
+  // it, a missing JWT_SECRET crashes createSessionToken with an opaque,
+  // bodyless 500 instead of a real, diagnosable error.
+  if (!process.env.JWT_SECRET) {
+    console.error("Admin login failed: JWT_SECRET is not set in this environment.");
+    return NextResponse.json(
+      { error: "Sign-in is not available right now (server configuration issue)." },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const email = body?.email?.trim().toLowerCase();
   const password = body?.password;

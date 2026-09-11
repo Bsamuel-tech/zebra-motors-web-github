@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { getCustomerSession } from "@/lib/auth/requireCustomer";
 import { getCustomerById, getBookingsForCustomer } from "@/lib/db/customers";
 import { getSettings } from "@/lib/db/settings";
+import { getBookingExtras } from "@/lib/db/bookings";
 
 export const metadata = { title: "Booking details, Zebra Motors" };
 
@@ -21,6 +22,7 @@ export default async function BookingDetailPage({ params }) {
   if (!booking) notFound();
 
   const settings = await getSettings();
+  const bookingExtras = await getBookingExtras(booking.id);
 
   return (
     <div className="wrap" style={{ paddingTop: 30, paddingBottom: 70, maxWidth: 700 }}>
@@ -36,6 +38,8 @@ export default async function BookingDetailPage({ params }) {
         </div>
         <Row label="Pickup" value={booking.pickup_date} />
         <Row label="Return" value={booking.return_date} />
+        <Row label="Pickup location" value={booking.pickup_location || "Not provided"} />
+        <Row label="Drop-off location" value={booking.dropoff_location || booking.pickup_location || "Not provided"} />
         <Row label="Status" value={booking.status} />
         <Row
           label="Total"
@@ -44,9 +48,29 @@ export default async function BookingDetailPage({ params }) {
         <Row
           label="Payment"
           value="Arranged directly with Zebra Motors, no online payment is taken through this site."
-          last
+          last={bookingExtras.length === 0}
         />
       </div>
+
+      {bookingExtras.length > 0 && (
+        <div className="card" style={{ padding: 24, marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, textTransform: "uppercase", letterSpacing: ".04em", color: "var(--ink-soft)" }}>
+            Selected extras
+          </div>
+          {bookingExtras.map((extra, i) => (
+            <Row
+              key={extra.id}
+              label={extra.name}
+              value={
+                extra.amountRWF != null
+                  ? `RWF ${Number(extra.amountRWF).toLocaleString()}`
+                  : "Priced by Zebra"
+              }
+              last={i === bookingExtras.length - 1}
+            />
+          ))}
+        </div>
+      )}
 
       <p className="muted" style={{ fontSize: 13, marginBottom: 20 }}>
         To change or cancel this booking, or ask about payment, contact Zebra Motors directly at{" "}

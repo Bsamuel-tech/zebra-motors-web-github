@@ -24,12 +24,14 @@ export async function POST(request) {
     vehicleDbId,
     pickupDate,
     returnDate,
+    pickupLocation,
+    dropoffLocation,
     customerName,
     customerEmail,
     customerPhone,
     customerCountry,
     serviceType,
-    totalRWF,
+    extraKeys,
   } = body;
 
   if (!vehicleDbId || !pickupDate || !returnDate) {
@@ -41,30 +43,34 @@ export async function POST(request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
-  if (!Number.isFinite(Number(totalRWF))) {
-    return NextResponse.json({ error: "Could not determine a rental total, choose valid dates and try again." }, { status: 400 });
-  }
 
   try {
+    // No totalRWF is accepted from the browser here on purpose (see
+    // FINAL_FEATURE_AUDIT.md Section 2): createBooking() recomputes the real
+    // total itself from the vehicle's published rate and the real, active
+    // extras named in extraKeys, an "online_request" booking can never be
+    // charged a number the client made up.
     const booking = await createBooking({
       vehicleDbId,
       pickupDate,
       returnDate,
+      pickupLocation,
+      dropoffLocation,
       customerName: customerName.trim(),
       customerEmail: customerEmail.trim(),
       customerPhone: customerPhone?.trim() || null,
       customerCountry: customerCountry?.trim() || null,
       serviceType: serviceType || "self-drive",
-      totalRWF: Number(totalRWF),
+      extraKeys: Array.isArray(extraKeys) ? extraKeys : [],
       source: "online_request",
-      // notes isn't a real bookings column (see prisma/schema.sql), the
-      // request's extras/payment-preference detail lives only in this API
-      // response and the confirmation screen for now, not persisted
-      // separately. Recording it against the booking is a reasonable next
-      // step once Zebra confirms what staff actually want to see there.
     });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: error.message || "Could not submit your booking request." }, { status: 400 });
+    // checkAvailability's own real overlap/blocked-date check throws here
+    // when the vehicle is no longer free for these dates (see
+    // lib/db/bookings.js createBooking()), which is a real conflict, not a
+    // malformed request, hence 409 rather than 400.
+    const status = /available/i.test(error.message || "") ? 409 : 400;
+    return NextResponse.json({ error: error.message || "Could not submit your booking request." }, { status });
   }
 }

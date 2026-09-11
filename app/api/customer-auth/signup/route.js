@@ -8,6 +8,21 @@ import {
 } from "@/lib/auth/customerSession";
 
 export async function POST(request) {
+  // Fails loudly and honestly here rather than letting createCustomerSessionToken
+  // throw further down: without this check, a deployment that never had
+  // JWT_SECRET set (a real, common gap, since .env is gitignored and must be
+  // configured separately in the hosting platform's own environment variable
+  // settings) crashes with an opaque 500 and no body, which the login page
+  // can only show as "Something went wrong. Please try again.", with nothing
+  // in the response to tell Zebra staff what is actually broken.
+  if (!process.env.JWT_SECRET) {
+    console.error("Customer signup failed: JWT_SECRET is not set in this environment.");
+    return NextResponse.json(
+      { error: "Account creation is not available right now (server configuration issue). Contact Zebra Motors directly." },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const name = body?.name?.trim();
   const email = body?.email?.trim().toLowerCase();

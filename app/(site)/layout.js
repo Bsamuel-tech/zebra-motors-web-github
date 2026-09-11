@@ -1,6 +1,9 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ZebraAISupportWidget from "@/components/ZebraAISupportWidget";
+import PreferencesProvider from "@/components/PreferencesProvider";
 import { getSettings } from "@/lib/db/settings";
+import { getInitialLocale, getInitialCurrency } from "@/lib/prefsServer";
 
 // Forces every route nested under this layout to render per request rather
 // than being frozen into a static build-time snapshot. Business settings
@@ -39,6 +42,8 @@ function localBusinessJsonLd(settings) {
 
 export default async function SiteLayout({ children }) {
   const settings = await getSettings();
+  const initialLocale = getInitialLocale();
+  const initialCurrency = getInitialCurrency(settings.defaultCurrency, settings.supportedCurrencies);
   return (
     <>
       <script
@@ -46,9 +51,17 @@ export default async function SiteLayout({ children }) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd(settings)) }}
       />
-      <Header settings={settings} />
-      <main>{children}</main>
-      <Footer settings={settings} />
+      <PreferencesProvider
+        initialLocale={initialLocale}
+        initialCurrency={initialCurrency}
+        supportedCurrencies={settings.supportedCurrencies}
+        currencyRates={settings.currencyRates}
+      >
+        <Header settings={settings} />
+        <main>{children}</main>
+        <Footer settings={settings} />
+        <ZebraAISupportWidget />
+      </PreferencesProvider>
     </>
   );
 }

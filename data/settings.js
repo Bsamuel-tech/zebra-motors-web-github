@@ -33,14 +33,19 @@ export const settings = {
   country: "Rwanda",
   timezone: "Africa/Kigali",
   defaultCurrency: "RWF",
-  // Multi currency display is on the roadmap (Phase 3, item P1-4) once a
-  // real currency service exists. Until then, RWF is the only price shown,
-  // since showing USD/EUR/GBP without a live conversion source would mean
-  // hardcoding a conversion rate, which the platform rules also forbid.
+  // Currency conversion display is real (see lib/currency.js,
+  // components/CurrencySwitcher.js): an admin adds a currency and its real
+  // exchange rate at /admin/settings, which appends it here
+  // (business_settings.currency_rates). A fresh install starts with none
+  // configured, RWF only, until Zebra actually enters a rate, never a
+  // guessed one.
   supportedCurrencies: ["RWF"],
-  // English is live today. French and Kinyarwanda are planned (Phase 3E)
-  // but no translation files exist yet, so only English is listed as
-  // actually supported.
+  currencyRates: {},
+  // Site chrome (header, footer, homepage hero) is translatable into
+  // English, French, and Kinyarwanda today, see lib/i18n/dictionaries.js and
+  // components/LanguageSwitcher.js. This particular list is unrelated to
+  // that, it is Zebra's own confirmed language(s) of business, left at
+  // English only until Zebra confirms otherwise.
   supportedLanguages: ["en"],
   businessHours: "NOT YET CONFIRMED",
   emergencyPhone: "NOT YET CONFIRMED",

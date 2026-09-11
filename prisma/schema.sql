@@ -47,6 +47,15 @@ CREATE TABLE IF NOT EXISTS business_settings (
   timezone             TEXT NOT NULL DEFAULT 'Africa/Kigali',
   default_currency     TEXT NOT NULL DEFAULT 'RWF',
   supported_currencies TEXT NOT NULL DEFAULT '["RWF"]',
+  -- Admin-entered exchange rates (Section: currency conversion), one real
+  -- number per currency code, meaning "1 unit of this currency = this many
+  -- RWF" (the way a real person reads a rate: "1 USD = 1300 RWF"), e.g.
+  -- '{"USD": 1300, "EUR": 1200}'. RWF itself is never a key here, it is the
+  -- database's own unit, nothing to convert. A currency in
+  -- supported_currencies with no rate here simply cannot be shown
+  -- converted yet, see lib/currency.js, nothing is ever estimated from a
+  -- missing rate.
+  currency_rates       TEXT NOT NULL DEFAULT '{}',
   supported_languages  TEXT NOT NULL DEFAULT '["en"]',
   business_hours       TEXT NOT NULL DEFAULT 'NOT YET CONFIRMED',
   emergency_phone      TEXT NOT NULL DEFAULT 'NOT YET CONFIRMED',
@@ -144,6 +153,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   -- the admin bookings list distinguish "needs your review" from "you
   -- already confirmed this by phone", see lib/db/bookings.js createBooking().
   source         TEXT NOT NULL DEFAULT 'staff_entered',
+  -- Real pickup/drop-off text the customer (or staff) entered. Collected in
+  -- the booking form since the beginning, but previously dropped before the
+  -- network request, see lib/db/bookings.js createBooking() for where this
+  -- is now actually saved.
+  pickup_location  TEXT,
+  dropoff_location TEXT,
   total_rwf      INTEGER NOT NULL,
   deposit_rwf    INTEGER,
   is_demo        INTEGER NOT NULL DEFAULT 1,
@@ -157,6 +172,25 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at     TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Which real, admin-priced extras (rental_extras) a customer actually
+-- selected on a given booking, snapshotted at booking time (name, pricing
+-- type, and price copied in, not just a foreign key) so a later admin price
+-- change never silently rewrites what a past customer was actually charged.
+-- Previously this information was computed into the on-screen total and
+-- then discarded, never reaching the database, see FINAL_FEATURE_AUDIT.md
+-- Section 3.
+CREATE TABLE IF NOT EXISTS booking_extras (
+  id           TEXT PRIMARY KEY,
+  booking_id   TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  extra_key    TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  pricing_type TEXT NOT NULL,
+  price_rwf    INTEGER,
+  amount_rwf   INTEGER,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_booking_extras_booking_id ON booking_extras(booking_id);
 
 CREATE TABLE IF NOT EXISTS reviews (
   id         TEXT PRIMARY KEY,
@@ -408,4 +442,71 @@ CREATE TABLE IF NOT EXISTS route_cache (
   legs             TEXT, -- JSON array of {distanceKm, durationMinutes} per consecutive stop pair
   provider         TEXT NOT NULL DEFAULT 'osrm-demo',
   created_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ---------------------------------------------------------------------------
+-- ZEBRA AI: knowledge base, support conversations, interaction log.
+-- ---------------------------------------------------------------------------
+-- Every article here is written and published by a real admin through
+-- /admin/knowledge. The AI Support retrieval layer only ever surfaces what
+-- already exists in this table, it never invents Zebra policy text (Rule
+-- 2). This table starts empty on a fresh database; until real Zebra policy
+-- content is published here, AI Support and the What If explainer fall back
+-- to an honest "I can't confirm that, let me connect you with the team"
+-- for anything outside what the deterministic tools already compute.
+CREATE TABLE IF NOT EXISTS knowledge_articles (
+  id         TEXT PRIMARY KEY,
+  category   TEXT NOT NULL DEFAULT 'FAQ', -- FLEET | POLICIES | INSURANCE | AIRPORT_PICKUP | RENTAL_REQUIREMENTS | DRIVING_IN_RWANDA | DESTINATIONS | FAQ | CANCELLATION | MILEAGE | CHAUFFEUR | TERMS
+  title      TEXT NOT NULL,
+  body       TEXT NOT NULL DEFAULT '',
+  published  INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_articles_category ON knowledge_articles(category);
+
+-- One row per customer support issue, whether it stays fully AI-handled or
+-- is escalated to a real Zebra staff member. customer_id and booking_id are
+-- nullable, a visitor can start a conversation before signing in or before
+-- any booking exists. Once assigned_agent_id is set, the AI must stop
+-- auto-responding in this conversation (enforced in the API route, not just
+-- the UI), see lib/ai/support.js.
+CREATE TABLE IF NOT EXISTS support_conversations (
+  id                TEXT PRIMARY KEY,
+  customer_id       TEXT REFERENCES customers(id),
+  booking_id        TEXT REFERENCES bookings(id),
+  status            TEXT NOT NULL DEFAULT 'OPEN', -- OPEN | AI_HANDLING | WAITING_FOR_CUSTOMER | WAITING_FOR_ZEBRA | ESCALATED | RESOLVED | CLOSED
+  priority          TEXT NOT NULL DEFAULT 'NORMAL', -- NORMAL | HIGH
+  assigned_agent_id TEXT REFERENCES users(id),
+  ai_summary        TEXT NOT NULL DEFAULT '',
+  escalation_reason TEXT,
+  access_token_hash TEXT,
+  created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_support_conversations_status ON support_conversations(status);
+
+CREATE TABLE IF NOT EXISTS support_messages (
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES support_conversations(id) ON DELETE CASCADE,
+  sender_type     TEXT NOT NULL, -- CUSTOMER | AI | AGENT | SYSTEM
+  content         TEXT NOT NULL DEFAULT '',
+  metadata_json   TEXT NOT NULL DEFAULT '{}',
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_conversation ON support_messages(conversation_id);
+
+-- Auditability (AI architecture spec, item 22): one row per AI turn, enough
+-- to answer "what did the AI do and why" without duplicating raw message
+-- content, which already lives in support_messages.
+CREATE TABLE IF NOT EXISTS ai_interaction_log (
+  id                     TEXT PRIMARY KEY,
+  conversation_id        TEXT REFERENCES support_conversations(id),
+  provider               TEXT NOT NULL DEFAULT 'none', -- none | openai | anthropic
+  model                  TEXT NOT NULL DEFAULT '',
+  tools_called_json      TEXT NOT NULL DEFAULT '[]',
+  knowledge_sources_json TEXT NOT NULL DEFAULT '[]',
+  escalated              INTEGER NOT NULL DEFAULT 0,
+  escalation_reason      TEXT,
+  created_at             TEXT NOT NULL DEFAULT (datetime('now'))
 );

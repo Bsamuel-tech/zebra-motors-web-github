@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Photo from "@/components/Photo";
+import HomeHero from "@/components/HomeHero";
 import VehicleCard from "@/components/VehicleCard";
 import { getVehicles } from "@/lib/db/vehicles";
 import { getReviews } from "@/lib/db/reviews";
@@ -26,58 +26,10 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* hero */}
-      <div style={{ position: "relative", height: 560 }}>
-        <Photo height="100%" />
-        {/* Photography brief (internal, not shown to customers): a real
-            Zebra vehicle on the Kigali to Musanze road, golden hour. Replace
-            this placeholder once real photography is available. */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to top, rgba(15,14,8,.62) 0%, rgba(15,14,8,.28) 46%, rgba(15,14,8,.12) 100%)",
-          }}
-        />
-        <div className="wrap" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", paddingBottom: 64 }}>
-          <div style={{ maxWidth: 620 }}>
-            <h1 style={{ color: "#fff", fontSize: 44, lineHeight: 1.15, marginBottom: 16 }}>
-              Professional car rental and mobility services in Rwanda.
-            </h1>
-            <p style={{ color: "#edeae0", fontSize: 16, lineHeight: 1.6, maxWidth: 500, marginBottom: 26 }}>
-              Self-drive, or ask about a professional driver. Share your flight details and Zebra
-              will help plan your Kigali pickup. Browse the fleet and published pricing, then
-              confirm your booking directly with Zebra.
-            </p>
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href="/cars" className="btn-primary">
-                Find a Car
-              </Link>
-              <Link href="/plan-your-trip" className="btn-secondary">
-                Plan My Rwanda Trip
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* trust strip */}
-      <div className="wrap" style={{ display: "flex", justifyContent: "center", gap: 40, flexWrap: "wrap", padding: "28px 32px" }}>
-        {[
-          "Kigali-based, in-person handover",
-          "Real customer reviews",
-          "Phone support",
-          "Self-drive, driver available on request",
-        ].map((t) => (
-          <div key={t} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <svg width="16" height="16" fill="none" stroke="#2F5D46" strokeWidth="1.8" viewBox="0 0 24 24">
-              <path d="M20 7l-9 9-5-5" />
-            </svg>
-            <span style={{ fontSize: 13.5, color: "var(--ink-soft)" }}>{t}</span>
-          </div>
-        ))}
-      </div>
+      {/* Photography brief (internal, not shown to customers): a real Zebra
+          vehicle on the Kigali to Musanze road, golden hour. Replace this
+          placeholder once real photography is available (see HomeHero.js). */}
+      <HomeHero />
 
       {/* featured fleet */}
       <div className="section" style={{ background: "#fff", borderTop: "1px solid var(--line)" }}>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import VehiclePhoto from "@/components/VehiclePhoto";
+import ConvertedPrice from "@/components/ConvertedPrice";
 import { formatRWF, priceRangeLabel, weeklyRateRWF, monthlyRateRWF } from "@/data/vehicles";
 import { getVehicleBySlug } from "@/lib/db/vehicles";
 import { recordPageView } from "@/lib/db/analytics";
@@ -118,7 +119,10 @@ export default async function VehicleDetailPage({ params }) {
         {/* booking sidebar */}
         <div style={{ width: "100%", maxWidth: 340, flexShrink: 0 }}>
           <div className="card" style={{ padding: 22, position: "sticky", top: 20 }}>
-            <div style={{ fontSize: 22, marginBottom: 4 }}>{priceRangeLabel(vehicle)}</div>
+            <div style={{ fontSize: 22, marginBottom: 4 }}>
+              {priceRangeLabel(vehicle)}
+              <ConvertedPrice rwf={vehicle.dailyRateRWFMax} />
+            </div>
             <div className="muted" style={{ fontSize: 12.5, marginBottom: 18 }}>
               ≈ RWF {formatRWF(weeklyRateRWF(vehicle))}/week · ≈ RWF {formatRWF(monthlyRateRWF(vehicle))}/month
               (illustrative, not yet confirmed pricing)

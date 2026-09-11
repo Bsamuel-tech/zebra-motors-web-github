@@ -4,16 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { telLink, whatsappLink } from "@/data/settings";
+import { usePreferences } from "./PreferencesProvider";
+import LanguageSwitcher from "./LanguageSwitcher";
+import CurrencySwitcher from "./CurrencySwitcher";
 
-const LINKS = [
-  { href: "/cars", label: "Fleet" },
-  { href: "/chauffeur", label: "Chauffeur" },
-  { href: "/airport-car-rental", label: "Airport Pickup" },
-  { href: "/packages", label: "Packages" },
-  { href: "/rwanda-guide", label: "Rwanda Guide" },
-  { href: "/what-if", label: "What If" },
-  { href: "/about", label: "About" },
-];
+function navLinks(nav) {
+  return [
+    { href: "/cars", label: nav.fleet },
+    { href: "/chauffeur", label: nav.chauffeur },
+    { href: "/airport-car-rental", label: nav.airportPickup },
+    { href: "/packages", label: nav.packages },
+    { href: "/rwanda-guide", label: nav.rwandaGuide },
+    { href: "/what-if", label: nav.whatIf },
+    { href: "/about", label: nav.about },
+  ];
+}
 
 // settings is passed down from app/(site)/layout.js, a server component
 // that reads the real, admin-editable business_settings row (Phase 3B).
@@ -23,6 +28,8 @@ export default function Header({ settings }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const waLink = whatsappLink({ settings });
+  const { dict } = usePreferences();
+  const LINKS = navLinks(dict.nav);
 
   // Real signed-in state, not decorative: this link used to always say
   // "Sign in" even for a signed-in customer, because there was no real
@@ -44,7 +51,7 @@ export default function Header({ settings }) {
     };
   }, [pathname]);
 
-  const accountLabel = account ? account.name.split(" ")[0] : "Sign in";
+  const accountLabel = account ? account.name.split(" ")[0] : dict.nav.signIn;
   const accountHref = account ? "/account" : "/login";
 
   return (
@@ -65,6 +72,9 @@ export default function Header({ settings }) {
               </a>
             </>
           )}
+          <span style={{ width: 1, height: 12, background: "#4a4938" }} />
+          <LanguageSwitcher />
+          <CurrencySwitcher />
         </div>
       </div>
       <div className="main-nav">
@@ -87,7 +97,7 @@ export default function Header({ settings }) {
             {accountLabel}
           </Link>
           <Link href="/cars" className="btn-outline hide-mobile" style={{ padding: "10px 20px", fontSize: 13.5 }}>
-            Find a Car
+            {dict.nav.findACar}
           </Link>
           <button
             type="button"
@@ -133,8 +143,13 @@ export default function Header({ settings }) {
             {accountLabel}
           </Link>
           <Link href="/cars" className="btn-primary" style={{ textAlign: "center" }} onClick={() => setMenuOpen(false)}>
-            Find a Car
+            {dict.nav.findACar}
           </Link>
+          <div className="mobile-menu-divider" />
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <LanguageSwitcher />
+            <CurrencySwitcher />
+          </div>
         </div>
       )}
     </div>

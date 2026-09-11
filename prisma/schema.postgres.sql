@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS business_settings (
   timezone             TEXT NOT NULL DEFAULT 'Africa/Kigali',
   default_currency     TEXT NOT NULL DEFAULT 'RWF',
   supported_currencies TEXT NOT NULL DEFAULT '["RWF"]',
+  currency_rates       TEXT NOT NULL DEFAULT '{}',
   supported_languages  TEXT NOT NULL DEFAULT '["en"]',
   business_hours       TEXT NOT NULL DEFAULT 'NOT YET CONFIRMED',
   emergency_phone      TEXT NOT NULL DEFAULT 'NOT YET CONFIRMED',
@@ -141,6 +142,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   -- the admin bookings list distinguish "needs your review" from "you
   -- already confirmed this by phone", see lib/db/bookings.js createBooking().
   source         TEXT NOT NULL DEFAULT 'staff_entered',
+  pickup_location  TEXT,
+  dropoff_location TEXT,
   total_rwf      INTEGER NOT NULL,
   deposit_rwf    INTEGER,
   is_demo        INTEGER NOT NULL DEFAULT 1,
@@ -154,6 +157,18 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at     TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text,
   updated_at     TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
 );
+
+CREATE TABLE IF NOT EXISTS booking_extras (
+  id           TEXT PRIMARY KEY,
+  booking_id   TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  extra_key    TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  pricing_type TEXT NOT NULL,
+  price_rwf    INTEGER,
+  amount_rwf   INTEGER,
+  created_at   TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
+);
+CREATE INDEX IF NOT EXISTS idx_booking_extras_booking_id ON booking_extras(booking_id);
 
 CREATE TABLE IF NOT EXISTS reviews (
   id         TEXT PRIMARY KEY,
@@ -405,4 +420,57 @@ CREATE TABLE IF NOT EXISTS route_cache (
   legs             TEXT, -- JSON array of {distanceKm, durationMinutes} per consecutive stop pair
   provider         TEXT NOT NULL DEFAULT 'osrm-demo',
   created_at       TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
+);
+
+-- ---------------------------------------------------------------------------
+-- ZEBRA AI: knowledge base, support conversations, interaction log.
+-- Same tables and columns as prisma/schema.sql, see that file for the
+-- rationale behind each one.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS knowledge_articles (
+  id         TEXT PRIMARY KEY,
+  category   TEXT NOT NULL DEFAULT 'FAQ',
+  title      TEXT NOT NULL,
+  body       TEXT NOT NULL DEFAULT '',
+  published  INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text,
+  updated_at TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_articles_category ON knowledge_articles(category);
+
+CREATE TABLE IF NOT EXISTS support_conversations (
+  id                TEXT PRIMARY KEY,
+  customer_id       TEXT REFERENCES customers(id),
+  booking_id        TEXT REFERENCES bookings(id),
+  status            TEXT NOT NULL DEFAULT 'OPEN',
+  priority          TEXT NOT NULL DEFAULT 'NORMAL',
+  assigned_agent_id TEXT REFERENCES users(id),
+  ai_summary        TEXT NOT NULL DEFAULT '',
+  escalation_reason TEXT,
+  access_token_hash TEXT,
+  created_at        TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text,
+  updated_at        TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
+);
+CREATE INDEX IF NOT EXISTS idx_support_conversations_status ON support_conversations(status);
+
+CREATE TABLE IF NOT EXISTS support_messages (
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES support_conversations(id) ON DELETE CASCADE,
+  sender_type     TEXT NOT NULL,
+  content         TEXT NOT NULL DEFAULT '',
+  metadata_json   TEXT NOT NULL DEFAULT '{}',
+  created_at      TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
+);
+CREATE INDEX IF NOT EXISTS idx_support_messages_conversation ON support_messages(conversation_id);
+
+CREATE TABLE IF NOT EXISTS ai_interaction_log (
+  id                     TEXT PRIMARY KEY,
+  conversation_id        TEXT REFERENCES support_conversations(id),
+  provider               TEXT NOT NULL DEFAULT 'none',
+  model                  TEXT NOT NULL DEFAULT '',
+  tools_called_json      TEXT NOT NULL DEFAULT '[]',
+  knowledge_sources_json TEXT NOT NULL DEFAULT '[]',
+  escalated              INTEGER NOT NULL DEFAULT 0,
+  escalation_reason      TEXT,
+  created_at             TEXT NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::text
 );

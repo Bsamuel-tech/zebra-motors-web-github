@@ -91,6 +91,9 @@ export default function TripPlanner({ vehicles, destinations }) {
   const [tripType, setTripType] = useState("roadtrip");
   const [budget, setBudget] = useState(35000);
   const [generated, setGenerated] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiParsing, setAiParsing] = useState(false);
+  const [aiNote, setAiNote] = useState("");
   // Real route result from /api/geo/route (OSRM), or an honest
   // "unavailable" state, never an invented distance or time (Rule 2). See
   // lib/geo/provider.js for the provider this calls.
@@ -176,8 +179,8 @@ export default function TripPlanner({ vehicles, destinations }) {
     }
   }
 
-  async function addCustom() {
-    const name = customName.trim();
+  async function addCustom(nameArg) {
+    const name = (nameArg ?? customName).trim();
     if (!name) return;
     const match = destinations.find((d) => d.name.toLowerCase() === name.toLowerCase());
     if (match) {
@@ -219,6 +222,54 @@ export default function TripPlanner({ vehicles, destinations }) {
       });
     } catch {
       updateStop(stop.id, { locating: false, geocodeAttempted: true });
+    }
+  }
+
+  // AI architecture spec item 12: turn a written paragraph into structured
+  // trip data, then hand it to this same, already-real Trip Planner rather
+  // than a separate parallel planner. Calls /api/ai/trip-plan, which reuses
+  // the same rule-based parser What If uses (see that route's own honesty
+  // note), so it recognizes any destination Zebra has actually published,
+  // not a hardcoded list, but will still miss unusual phrasing an actual
+  // connected AI model would catch.
+  async function parseTripFromText() {
+    const text = aiText.trim();
+    if (!text) return;
+    setAiParsing(true);
+    setAiNote("");
+    try {
+      const res = await fetch("/api/ai/trip-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        setAiNote("Could not read that description, try adding destinations below instead.");
+        return;
+      }
+      if (data.travelers?.adults != null) {
+        const total = data.travelers.adults + (data.travelers.children || 0);
+        if (data.travelers.children > 0) setTravellers("family");
+        else if (total <= 1) setTravellers("solo");
+        else if (total === 2) setTravellers("couple");
+        else setTravellers("group");
+      }
+      if (data.driveMode === "driver") setDriveMode("driver");
+      for (const d of data.destinations) {
+        if (!stops.some((s) => s.destinationId === d.dbId)) addDestination(d);
+      }
+      for (const name of data.unmatchedMentions) {
+        await addCustom(name);
+      }
+      const parts = [];
+      if (data.destinations.length) parts.push(`added ${data.destinations.length} destination${data.destinations.length === 1 ? "" : "s"}`);
+      if (data.unmatchedMentions.length) parts.push(`tried to locate ${data.unmatchedMentions.join(", ")}`);
+      setAiNote(parts.length ? `${data.note} (${parts.join(", ")}.)` : data.note);
+    } catch {
+      setAiNote("Could not reach the trip parser, try adding destinations below instead.");
+    } finally {
+      setAiParsing(false);
     }
   }
 
@@ -297,7 +348,28 @@ export default function TripPlanner({ vehicles, destinations }) {
         </div>
       </div>
 
-      <div className="wrap" style={{ display: "flex", gap: 32, padding: "36px 32px 70px 32px", flexWrap: "wrap" }}>
+      <div className="wrap" style={{ padding: "28px 32px 0 32px" }}>
+        <div className="card" style={{ padding: 20 }}>
+          <FieldLabel>Describe your trip (Zebra AI Trip Planner)</FieldLabel>
+          <textarea
+            value={aiText}
+            onChange={(e) => setAiText(e.target.value)}
+            rows={2}
+            placeholder="I am coming to Rwanda for 10 days with my wife. We arrive at Kigali Airport and want to visit Akagera, Musanze and Lake Kivu."
+            style={{ width: "100%", border: "1px solid var(--line)", padding: 10, fontFamily: "inherit", fontSize: 13.5, marginBottom: 10 }}
+          />
+          <button className="btn-primary" onClick={parseTripFromText} disabled={aiParsing || !aiText.trim()}>
+            {aiParsing ? "Reading..." : "Add these to my trip"}
+          </button>
+          <p className="muted" style={{ fontSize: 11, marginTop: 8 }}>
+            Reads your description with rule-based text matching against Zebra&apos;s real
+            published destinations, not a connected AI model. Check what it added below.
+          </p>
+          {aiNote && <p style={{ fontSize: 12.5, marginTop: 8 }}>{aiNote}</p>}
+        </div>
+      </div>
+
+      <div className="wrap" style={{ display: "flex", gap: 32, padding: "20px 32px 70px 32px", flexWrap: "wrap" }}>
         {/* input */}
         <div style={{ width: "100%", maxWidth: 380, flexShrink: 0 }} className="card">
           <div style={{ padding: 22 }}>
